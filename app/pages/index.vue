@@ -262,51 +262,45 @@
           </div>
           <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">KI Lernoptimierung</h2>
           <p class="text-sm max-w-lg mx-auto" style="color: var(--text-muted);">
-            Nutze moderne KI-Funktionen zur Verbesserung deines Lernprozesses.
+            Lade dein Lernmaterial hoch und erhalte sofort Ergebnisse.
           </p>
         </div>
       </div>
 
       <!-- AI Tools Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div v-for="(tool, i) in aiTools" :key="tool.id"
-             class="sf-card p-6 group relative overflow-hidden"
-             style="animation: slideInUp 0.5s ease forwards; animation-delay: {{ 0.1 + i * 0.05 }}s; opacity: 0;">
-          <!-- Accent Border Top -->
-          <div class="absolute top-0 left-0 right-0 h-1 sf-animated-gradient opacity-80"></div>
-
-          <div class="relative z-10">
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
-                   style="background: var(--bg-tertiary);">
-                {{ tool.icon }}
-              </div>
-              <div>
-                <h3 class="text-lg font-bold" style="color: var(--text-primary);">{{ tool.title }}</h3>
-                <p class="text-xs" style="color: var(--text-muted);">{{ tool.desc }}</p>
-              </div>
-            </div>
-
-            <!-- Upload Area -->
-            <div class="border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 hover:scale-[1.01] group/upload"
-                 style="border-color: var(--border-medium); background: var(--bg-tertiary);"
-                 @mouseenter="$event.currentTarget.style.borderColor = 'var(--accent-warm)'"
-                 @mouseleave="$event.currentTarget.style.borderColor = 'var(--border-medium)'">
-              <div class="text-3xl mb-2">📁</div>
-              <p class="text-sm font-medium" style="color: var(--text-secondary);">{{ tool.uploadLabel }}</p>
-            </div>
-
-            <button class="sf-btn sf-btn-primary w-full mt-4 text-sm">
-              {{ tool.button }}
-            </button>
-
-            <!-- Demo Box -->
-            <div class="mt-4 p-4 rounded-xl text-xs leading-relaxed" style="background: var(--bg-tertiary); color: var(--text-muted);">
-              <span class="font-semibold" style="color: var(--text-secondary);">Beispiel:</span><br>
-              <span v-html="tool.demo"></span>
-            </div>
-          </div>
-        </div>
+        <AIUploadCard
+          icon="📄"
+          title="KI Zusammenfassung"
+          desc="Lade Vorlesungsfolien hoch und erhalte automatisch Zusammenfassungen."
+          result-template="summary"
+          demo="• Wichtigste Definitionen zusammengefasst&lt;br&gt;• Kernaussagen strukturiert&lt;br&gt;• Prüfungsrelevante Themen markiert"
+          :delay="0.1"
+        />
+        <AIUploadCard
+          icon="🃏"
+          title="KI Karteikarten"
+          desc="Erstelle automatisch Lernkarten aus deinem Material."
+          result-template="flashcards"
+          demo="&lt;strong&gt;Frage:&lt;/strong&gt; Was ist Polymorphie?&lt;br&gt;&lt;strong&gt;Antwort:&lt;/strong&gt; Objekte können unterschiedliche Formen annehmen."
+          :delay="0.15"
+        />
+        <AIUploadCard
+          icon="📝"
+          title="KI Aufgabenerstellung"
+          desc="Generiere passende Übungsaufgaben zu deinem Stoff."
+          result-template="tasks"
+          demo="Erstelle eine Klasse &quot;Student&quot; mit Konstruktor, Getter und Setter Methoden."
+          :delay="0.2"
+        />
+        <AIUploadCard
+          icon="❓"
+          title="KI Quiz"
+          desc="Erstelle Multiple-Choice-Quizze aus deinen Folien."
+          result-template="quiz"
+          demo="Welche Aussage beschreibt Vererbung in Java?&lt;br&gt;⭕ Eine Klasse kann Eigenschaften anderer Klassen übernehmen"
+          :delay="0.25"
+        />
       </div>
     </div>
 
@@ -353,13 +347,6 @@ const deadlineDate = ref('')
 const showModal = ref(false)
 
 const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
-
-const aiTools = [
-  { id: 1, icon: '📄', title: 'KI Zusammenfassung', desc: 'Lade Vorlesungsfolien hoch und erhalte automatisch Zusammenfassungen.', uploadLabel: 'PDF oder Bild hochladen', button: 'Zusammenfassung generieren', demo: '• Wichtigste Definitionen\n• Kernaussagen zusammengefasst\n• Prüfungsrelevante Themen markiert' },
-  { id: 2, icon: '🃏', title: 'KI Karteikarten', desc: 'Erstelle automatisch Lernkarten aus deinem Material.', uploadLabel: 'Lernmaterial hochladen', button: 'Karteikarten erstellen', demo: '<strong>Frage:</strong> Was ist Polymorphie?\n\n<strong>Antwort:</strong> Objekte können unterschiedliche Formen annehmen.' },
-  { id: 3, icon: '📝', title: 'KI Aufgabenerstellung', desc: 'Generiere passende Übungsaufgaben zu deinem Stoff.', uploadLabel: 'Dokumente hochladen', button: 'Aufgaben generieren', demo: 'Erstelle eine Klasse "Student" mit Konstruktor, Getter und Setter Methoden.' },
-  { id: 4, icon: '❓', title: 'KI Quiz', desc: 'Erstelle Multiple-Choice-Quizze aus deinen Folien.', uploadLabel: 'Vorlesungsunterlagen hochladen', button: 'Quiz generieren', demo: 'Welche Aussage beschreibt Vererbung in Java?\n\n⭕ Eine Klasse kann Eigenschaften anderer Klassen übernehmen' },
-]
 
 const handleAddTask = () => {
   if (!taskInput.value.trim()) return
