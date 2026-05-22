@@ -8,32 +8,44 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+        sf: {
+          bg: 'var(--bg-primary)',
+          'bg-secondary': 'var(--bg-secondary)',
+          'bg-tertiary': 'var(--bg-tertiary)',
+          card: 'var(--bg-card)',
+          glass: 'var(--bg-glass)',
+          text: 'var(--text-primary)',
+          'text-secondary': 'var(--text-secondary)',
+          muted: 'var(--text-muted)',
+          warm: 'var(--accent-warm)',
+          'warm-light': 'var(--accent-warm-light)',
+          cool: 'var(--accent-cool)',
+          'cool-light': 'var(--accent-cool-light)',
+          purple: 'var(--accent-purple)',
+          rose: 'var(--accent-rose)',
+          border: 'var(--border-subtle)',
+          'border-medium': 'var(--border-medium)',
         },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      borderRadius: {
+        'sf-sm': '12px',
+        'sf-md': '16px',
+        'sf-lg': '24px',
+        'sf-xl': '32px',
+      },
+      boxShadow: {
+        'sf-card': 'var(--shadow-card)',
+        'sf-elevated': 'var(--shadow-elevated)',
+        'sf-glow': 'var(--shadow-glow)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.3s ease-out',
-        'slide-up': 'slideUp 0.4s ease-out',
-      },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
+        'slide-up': 'slideInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+        'fade-in': 'fadeIn 0.4s ease forwards',
+        'float': 'float 4s ease-in-out infinite',
+        'pulse-soft': 'pulse-soft 3s ease-in-out infinite',
       },
     },
   },

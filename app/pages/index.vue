@@ -3,149 +3,242 @@
     <!-- ========================= -->
     <!-- ORGANISATION TAB -->
     <!-- ========================= -->
-    <div v-if="activeTab === 'orga'" class="animate-fade-in space-y-6">
-      <!-- Dashboard -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <button @click="openCompletedModal" class="card group text-left hover:border-primary-300 dark:hover:border-primary-700">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-2xl">📋</div>
-            <div>
-              <p class="text-3xl font-bold text-primary-600 dark:text-primary-400">{{ store.activeTasks.length }}</p>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Aufgaben offen</p>
-            </div>
+    <div v-if="activeTab === 'orga'" class="animate-fade-in space-y-8">
+      <!-- Welcome Section -->
+      <div class="sf-card p-8 relative overflow-hidden" style="animation: slideInUp 0.5s ease forwards;">
+        <div class="absolute top-0 right-0 w-64 h-64 opacity-10" style="background: radial-gradient(circle, var(--accent-warm), transparent);"></div>
+        <div class="relative z-10">
+          <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">
+            Willkommen zurück! 👋
+          </h2>
+          <p class="text-sm" style="color: var(--text-muted);">
+            Du hast <span class="font-bold" style="color: var(--accent-warm);">{{ store.activeTasks.length }}</span> offene Aufgaben,
+            <span class="font-bold" style="color: var(--accent-cool);">{{ store.activeGoals.length }}</span> Ziele und
+            <span class="font-bold" style="color: var(--accent-rose);">{{ store.activeDeadlines.length }}</span> Deadlines diese Woche.
+          </p>
+        </div>
+      </div>
+
+      <!-- Bento Dashboard -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left" style="animation: slideInUp 0.5s ease 0.05s forwards; opacity: 0;">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style="background: rgba(224, 122, 95, 0.15);">📝</div>
+            <span class="text-xs font-medium px-2.5 py-1 rounded-full" style="background: rgba(224, 122, 95, 0.1); color: var(--accent-warm);">Tasks</span>
           </div>
+          <p class="text-4xl font-bold mb-1" style="color: var(--accent-warm);">{{ store.activeTasks.length }}</p>
+          <p class="text-xs" style="color: var(--text-muted);">Offene Aufgaben</p>
+          <div class="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="background: linear-gradient(90deg, var(--accent-warm), var(--accent-warm-light));"></div>
         </button>
-        <button @click="openCompletedModal" class="card group text-left hover:border-primary-300 dark:hover:border-primary-700">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-2xl">🎯</div>
-            <div>
-              <p class="text-3xl font-bold text-green-600 dark:text-green-400">{{ store.activeGoals.length }}</p>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Ziele offen</p>
-            </div>
+
+        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left" style="animation: slideInUp 0.5s ease 0.1s forwards; opacity: 0;">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style="background: rgba(42, 157, 143, 0.15);">🎯</div>
+            <span class="text-xs font-medium px-2.5 py-1 rounded-full" style="background: rgba(42, 157, 143, 0.1); color: var(--accent-cool);">Ziele</span>
           </div>
+          <p class="text-4xl font-bold mb-1" style="color: var(--accent-cool);">{{ store.activeGoals.length }}</p>
+          <p class="text-xs" style="color: var(--text-muted);">Offene Ziele</p>
+          <div class="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="background: linear-gradient(90deg, var(--accent-cool), var(--accent-cool-light));"></div>
         </button>
-        <button @click="openCompletedModal" class="card group text-left hover:border-primary-300 dark:hover:border-primary-700">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-2xl">⏰</div>
-            <div>
-              <p class="text-3xl font-bold text-red-600 dark:text-red-400">{{ store.activeDeadlines.length }}</p>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Deadlines</p>
-            </div>
+
+        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left" style="animation: slideInUp 0.5s ease 0.15s forwards; opacity: 0;">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style="background: rgba(241, 91, 181, 0.15);">⏰</div>
+            <span class="text-xs font-medium px-2.5 py-1 rounded-full" style="background: rgba(241, 91, 181, 0.1); color: var(--accent-rose);">Deadlines</span>
           </div>
+          <p class="text-4xl font-bold mb-1" style="color: var(--accent-rose);">{{ store.activeDeadlines.length }}</p>
+          <p class="text-xs" style="color: var(--text-muted);">Bald fällig</p>
+          <div class="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="background: linear-gradient(90deg, var(--accent-rose), var(--accent-purple));"></div>
         </button>
       </div>
 
+      <!-- Tasks & Goals Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- To-Do -->
-        <div class="card animate-slide-up">
-          <h2 class="text-xl font-bold text-primary-700 dark:text-primary-400 mb-4 flex items-center gap-2">📝 Aufgaben</h2>
-          <div class="space-y-3">
-            <input v-model="taskInput" @keyup.enter="handleAddTask" placeholder="Neue Aufgabe..." class="input-field" />
-            <select v-model="taskPriority" class="input-field">
-              <option value="1">🔴 Hohe Prioritaet</option>
-              <option value="2">🟠 Mittlere Prioritaet</option>
-              <option value="3">🟢 Niedrige Prioritaet</option>
-            </select>
-            <button @click="handleAddTask" class="btn-primary w-full">Hinzufuegen</button>
+        <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.2s forwards; opacity: 0;">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(224, 122, 95, 0.15);">📝</div>
+            <h3 class="text-lg font-bold" style="color: var(--text-primary);">Aufgaben</h3>
+            <span class="ml-auto text-xs font-bold px-3 py-1 rounded-full" style="background: rgba(224, 122, 95, 0.1); color: var(--accent-warm);">{{ store.activeTasks.length }}</span>
           </div>
-          <ul class="mt-4 space-y-2 max-h-80 overflow-y-auto">
+
+          <div class="space-y-3 mb-5">
+            <input v-model="taskInput" @keyup.enter="handleAddTask" placeholder="Was steht an?" class="sf-input" />
+            <div class="flex gap-2">
+              <select v-model="taskPriority" class="sf-input sf-select flex-1 text-sm">
+                <option value="1">🔴 Dringend</option>
+                <option value="2">🟠 Wichtig</option>
+                <option value="3">🟢 Optional</option>
+              </select>
+              <button @click="handleAddTask" class="sf-btn sf-btn-primary px-6">+</button>
+            </div>
+          </div>
+
+          <ul class="space-y-2 max-h-72 overflow-y-auto pr-1">
             <li v-for="task in store.activeTasks" :key="task.id"
-                class="flex items-center justify-between gap-3 p-3 rounded-xl border-l-4 bg-gray-50 dark:bg-gray-800/50"
-                :class="priorityBorder(task.priority)">
-              <div class="flex items-center gap-2 min-w-0">
-                <span :class="priorityBadge(task.priority)" class="badge text-white shrink-0">{{ priorityLabel(task.priority) }}</span>
-                <span class="truncate text-sm">{{ task.text }}</span>
+                class="group flex items-center justify-between gap-3 p-4 rounded-xl transition-all duration-200 hover:scale-[1.01]"
+                :style="{ background: 'var(--bg-tertiary)', borderLeft: `3px solid ${priorityColor(task.priority)}` }">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="sf-badge text-white shrink-0 text-xs" :style="{ background: priorityColor(task.priority) }">
+                  {{ priorityLabel(task.priority) }}
+                </span>
+                <span class="truncate text-sm" style="color: var(--text-primary);">{{ task.text }}</span>
               </div>
-              <button @click="store.completeTask(task.id)" class="shrink-0 px-3 py-1.5 text-xs font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all">✓</button>
+              <button @click="store.completeTask(task.id)"
+                      class="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                      style="background: var(--accent-cool);">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              </button>
             </li>
-            <li v-if="store.activeTasks.length === 0" class="text-center text-gray-400 py-4 text-sm">Keine offenen Aufgaben 🎉</li>
+            <li v-if="store.activeTasks.length === 0" class="text-center py-8" style="color: var(--text-muted);">
+              <div class="text-3xl mb-2">🎉</div>
+              <p class="text-sm">Alles erledigt!</p>
+            </li>
           </ul>
         </div>
 
         <!-- Ziele -->
-        <div class="card animate-slide-up" style="animation-delay: 0.1s">
-          <h2 class="text-xl font-bold text-green-700 dark:text-green-400 mb-4 flex items-center gap-2">🎯 Ziele</h2>
-          <div class="space-y-3">
-            <input v-model="goalInput" @keyup.enter="handleAddGoal" placeholder="Neues Ziel..." class="input-field" />
-            <input v-model="goalDate" type="date" class="input-field" />
-            <button @click="handleAddGoal" class="btn-primary w-full bg-green-600 hover:bg-green-700">Hinzufuegen</button>
+        <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.25s forwards; opacity: 0;">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(42, 157, 143, 0.15);">🎯</div>
+            <h3 class="text-lg font-bold" style="color: var(--text-primary);">Ziele</h3>
+            <span class="ml-auto text-xs font-bold px-3 py-1 rounded-full" style="background: rgba(42, 157, 143, 0.1); color: var(--accent-cool);">{{ store.activeGoals.length }}</span>
           </div>
-          <ul class="mt-4 space-y-2 max-h-80 overflow-y-auto">
-            <li v-for="goal in store.activeGoals" :key="goal.id" class="flex items-center justify-between gap-3 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+
+          <div class="space-y-3 mb-5">
+            <input v-model="goalInput" @keyup.enter="handleAddGoal" placeholder="Neues Ziel setzen..." class="sf-input" />
+            <div class="flex gap-2">
+              <input v-model="goalDate" type="date" class="sf-input flex-1 text-sm" />
+              <button @click="handleAddGoal" class="sf-btn sf-btn-primary px-6" style="background: linear-gradient(135deg, var(--accent-cool), var(--accent-cool-light));">+</button>
+            </div>
+          </div>
+
+          <ul class="space-y-2 max-h-72 overflow-y-auto pr-1">
+            <li v-for="goal in store.activeGoals" :key="goal.id"
+                class="group flex items-center justify-between gap-3 p-4 rounded-xl transition-all duration-200 hover:scale-[1.01]"
+                style="background: var(--bg-tertiary);">
               <div class="min-w-0">
-                <p class="font-medium text-sm truncate">{{ goal.text }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(goal.date) }}</p>
+                <p class="text-sm font-medium" style="color: var(--text-primary);">{{ goal.text }}</p>
+                <p class="text-xs mt-0.5" style="color: var(--text-muted);">📅 {{ formatDate(goal.date) }}</p>
               </div>
-              <button @click="store.completeGoal(goal.id)" class="shrink-0 px-3 py-1.5 text-xs font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all">✓</button>
+              <button @click="store.completeGoal(goal.id)"
+                      class="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                      style="background: var(--accent-cool);">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              </button>
             </li>
-            <li v-if="store.activeGoals.length === 0" class="text-center text-gray-400 py-4 text-sm">Keine offenen Ziele</li>
+            <li v-if="store.activeGoals.length === 0" class="text-center py-8" style="color: var(--text-muted);">
+              <div class="text-3xl mb-2">🎯</div>
+              <p class="text-sm">Noch keine Ziele gesetzt</p>
+            </li>
           </ul>
         </div>
 
         <!-- Lernplan -->
-        <div class="card animate-slide-up" style="animation-delay: 0.15s">
-          <h2 class="text-xl font-bold text-purple-700 dark:text-purple-400 mb-4 flex items-center gap-2">🧠 Lernplan</h2>
-          <div class="space-y-3">
-            <input v-model="studySubject" @keyup.enter="handleAddStudy" placeholder="Fach..." class="input-field" />
-            <input v-model="studyDate" type="date" class="input-field" />
-            <button @click="handleAddStudy" class="btn-primary w-full bg-purple-600 hover:bg-purple-700">Hinzufuegen</button>
+        <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.3s forwards; opacity: 0;">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(155, 93, 229, 0.15);">🧠</div>
+            <h3 class="text-lg font-bold" style="color: var(--text-primary);">Lernplan</h3>
+            <span class="ml-auto text-xs font-bold px-3 py-1 rounded-full" style="background: rgba(155, 93, 229, 0.1); color: var(--accent-purple);">{{ store.upcomingStudyPlans.length }}</span>
           </div>
-          <ul class="mt-4 space-y-2 max-h-80 overflow-y-auto">
-            <li v-for="plan in store.upcomingStudyPlans" :key="plan.id" class="flex items-center gap-3 p-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
-              <span class="text-lg">📚</span>
-              <div>
-                <p class="font-medium text-sm">{{ plan.subject }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(plan.date) }}</p>
+
+          <div class="space-y-3 mb-5">
+            <div class="flex gap-2">
+              <input v-model="studySubject" @keyup.enter="handleAddStudy" placeholder="Fach..." class="sf-input flex-1 text-sm" />
+              <input v-model="studyDate" type="date" class="sf-input w-36 text-sm" />
+            </div>
+            <button @click="handleAddStudy" class="sf-btn sf-btn-primary w-full text-sm" style="background: linear-gradient(135deg, var(--accent-purple), var(--accent-rose));">📚 Hinzufügen
+            </button>
+          </div>
+
+          <ul class="space-y-2 max-h-60 overflow-y-auto pr-1">
+            <li v-for="plan in store.upcomingStudyPlans" :key="plan.id"
+                class="flex items-center gap-3 p-3 rounded-xl"
+                style="background: var(--bg-tertiary);">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm" style="background: rgba(155, 93, 229, 0.15);">📚</div>
+              <div class="min-w-0">
+                <p class="text-sm font-medium" style="color: var(--text-primary);">{{ plan.subject }}</p>
+                <p class="text-xs" style="color: var(--text-muted);">{{ formatDate(plan.date) }}</p>
               </div>
             </li>
-            <li v-if="store.upcomingStudyPlans.length === 0" class="text-center text-gray-400 py-4 text-sm">Keine Lernplaene</li>
+            <li v-if="store.upcomingStudyPlans.length === 0" class="text-center py-6" style="color: var(--text-muted);">
+              <p class="text-sm">Noch keine Lernpläne</p>
+            </li>
           </ul>
         </div>
 
         <!-- Deadlines -->
-        <div class="card animate-slide-up" style="animation-delay: 0.2s">
-          <h2 class="text-xl font-bold text-red-700 dark:text-red-400 mb-4 flex items-center gap-2">⏰ Deadlines</h2>
-          <div class="space-y-3">
-            <input v-model="deadlineInput" @keyup.enter="handleAddDeadline" placeholder="Deadline..." class="input-field" />
-            <input v-model="deadlineDate" type="date" class="input-field" />
-            <button @click="handleAddDeadline" class="btn-primary w-full bg-red-600 hover:bg-red-700">Hinzufuegen</button>
+        <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.35s forwards; opacity: 0;">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(241, 91, 181, 0.15);">⏰</div>
+            <h3 class="text-lg font-bold" style="color: var(--text-primary);">Deadlines</h3>
+            <span class="ml-auto text-xs font-bold px-3 py-1 rounded-full" style="background: rgba(241, 91, 181, 0.1); color: var(--accent-rose);">{{ store.activeDeadlines.length }}</span>
           </div>
-          <ul class="mt-4 space-y-2 max-h-80 overflow-y-auto">
-            <li v-for="dl in store.activeDeadlines" :key="dl.id" class="flex items-center justify-between gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <div class="min-w-0">
-                <p class="font-medium text-sm truncate">{{ dl.text }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(dl.date) }}</p>
+
+          <div class="space-y-3 mb-5">
+            <input v-model="deadlineInput" @keyup.enter="handleAddDeadline" placeholder="Was ist fällig?" class="sf-input" />
+            <div class="flex gap-2">
+              <input v-model="deadlineDate" type="date" class="sf-input flex-1 text-sm" />
+              <button @click="handleAddDeadline" class="sf-btn sf-btn-primary px-6" style="background: linear-gradient(135deg, var(--accent-rose), var(--accent-purple));">+</button>
+            </div>
+          </div>
+
+          <ul class="space-y-2 max-h-72 overflow-y-auto pr-1">
+            <li v-for="dl in store.activeDeadlines" :key="dl.id"
+                class="group flex items-center justify-between gap-3 p-4 rounded-xl transition-all duration-200 hover:scale-[1.01]"
+                style="background: var(--bg-tertiary);">
+              <div class="min-w-0 flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full shrink-0" style="background: var(--accent-rose);"></div>
+                <div>
+                  <p class="text-sm font-medium" style="color: var(--text-primary);">{{ dl.text }}</p>
+                  <p class="text-xs mt-0.5" style="color: var(--text-muted);">⏰ {{ formatDate(dl.date) }}</p>
+                </div>
               </div>
-              <button @click="store.completeDeadline(dl.id)" class="shrink-0 px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all">✓</button>
+              <button @click="store.completeDeadline(dl.id)"
+                      class="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                      style="background: var(--accent-rose);">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              </button>
             </li>
-            <li v-if="store.activeDeadlines.length === 0" class="text-center text-gray-400 py-4 text-sm">Keine Deadlines 🎉</li>
+            <li v-if="store.activeDeadlines.length === 0" class="text-center py-8" style="color: var(--text-muted);">
+              <div class="text-3xl mb-2">✅</div>
+              <p class="text-sm">Keine Deadlines!</p>
+            </li>
           </ul>
         </div>
       </div>
 
       <!-- Kalender -->
-      <div class="card animate-slide-up" style="animation-delay: 0.25s">
+      <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.4s forwards; opacity: 0;">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold text-primary-700 dark:text-primary-400 flex items-center gap-2">📅 Wochenuebersicht</h2>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(224, 122, 95, 0.15);">📅</div>
+            <h3 class="text-lg font-bold" style="color: var(--text-primary);">Wochenübersicht</h3>
+          </div>
           <div class="flex items-center gap-2">
-            <button @click="store.changeWeek(-1)" class="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">⬅</button>
-            <span class="text-sm font-medium px-2">{{ weekRange }}</span>
-            <button @click="store.changeWeek(1)" class="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">➡</button>
+            <button @click="store.changeWeek(-1)" class="sf-btn sf-btn-secondary w-10 h-10 p-0 rounded-xl">⬅</button>
+            <span class="text-sm font-semibold px-4 py-2 rounded-xl" style="background: var(--bg-tertiary); color: var(--text-secondary);">{{ weekRange }}</span>
+            <button @click="store.changeWeek(1)" class="sf-btn sf-btn-secondary w-10 h-10 p-0 rounded-xl">➡</button>
           </div>
         </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
-          <div v-for="(day, idx) in store.weekDays" :key="idx" class="min-h-[180px] p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-            <h4 class="text-sm font-semibold text-primary-700 dark:text-primary-400 mb-2">
-              {{ dayNames[idx] }}<br>
-              <span class="text-xs font-normal text-gray-500">{{ day.getDate() }}.{{ day.getMonth()+1 }}.</span>
+          <div v-for="(day, idx) in store.weekDays" :key="idx"
+               class="min-h-[200px] p-4 rounded-xl transition-all duration-200 hover:scale-[1.02]"
+               style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle);">
+            <h4 class="text-xs font-bold mb-3 uppercase tracking-wider" :style="isToday(day) ? { color: 'var(--accent-warm)' } : { color: 'var(--text-muted)' }">
+              {{ dayNames[idx] }}
+              <span class="block mt-0.5 text-sm font-normal normal-case" style="color: var(--text-secondary);">{{ day.getDate() }}.{{ day.getMonth()+1 }}.</span>
             </h4>
             <div class="space-y-1.5">
               <div v-for="entry in store.entriesForDay(day)" :key="entry.id"
-                   class="text-xs p-2 rounded-lg text-white"
-                   :class="entry.type === 'deadline' ? 'bg-red-500' : 'bg-primary-500'">
+                   class="group text-xs p-2.5 rounded-lg text-white cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-lg"
+                   :style="{ background: entry.type === 'deadline' ? 'var(--accent-rose)' : 'var(--accent-cool)' }">
                 <div class="flex items-center justify-between gap-1">
                   <span class="truncate">{{ entry.text }}</span>
-                  <button @click="store.completeCalendarEntry(entry.id)" class="shrink-0 text-[10px] bg-white/20 hover:bg-white/30 px-1 rounded">✓</button>
+                  <button @click.stop="store.completeCalendarEntry(entry.id)" class="shrink-0 w-5 h-5 rounded flex items-center justify-center bg-white/20 hover:bg-white/30 transition-all">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -157,31 +250,61 @@
     <!-- ========================= -->
     <!-- KI TAB -->
     <!-- ========================= -->
-    <div v-else class="animate-fade-in space-y-6">
-      <div class="card text-center py-12">
-        <div class="text-5xl mb-4">🤖</div>
-        <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-2">KI Lernoptimierung</h2>
-        <p class="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-          Nutze moderne KI-Funktionen zur Verbesserung deines Lernprozesses. Lade Material hoch und lasse dir Zusammenfassungen, Karteikarten, Aufgaben und Quizze generieren.
-        </p>
+    <div v-else class="animate-fade-in space-y-8">
+      <!-- Hero -->
+      <div class="sf-card p-8 text-center relative overflow-hidden" style="animation: slideInUp 0.5s ease forwards;">
+        <div class="absolute inset-0 opacity-5">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full sf-animated-gradient blur-3xl"></div>
+        </div>
+        <div class="relative z-10">
+          <div class="w-20 h-20 rounded-3xl sf-animated-gradient flex items-center justify-center text-white text-4xl mx-auto mb-4 shadow-2xl">
+            🤖
+          </div>
+          <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">KI Lernoptimierung</h2>
+          <p class="text-sm max-w-lg mx-auto" style="color: var(--text-muted);">
+            Nutze moderne KI-Funktionen zur Verbesserung deines Lernprozesses.
+          </p>
+        </div>
       </div>
 
+      <!-- AI Tools Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div v-for="tool in aiTools" :key="tool.id" class="card border-t-4 border-primary-500 hover:-translate-y-1 transition-transform">
-          <div class="text-4xl mb-3">{{ tool.icon }}</div>
-          <h3 class="text-lg font-bold text-primary-700 dark:text-primary-400 mb-2">{{ tool.title }}</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ tool.desc }}</p>
+        <div v-for="(tool, i) in aiTools" :key="tool.id"
+             class="sf-card p-6 group relative overflow-hidden"
+             style="animation: slideInUp 0.5s ease forwards; animation-delay: {{ 0.1 + i * 0.05 }}s; opacity: 0;">
+          <!-- Accent Border Top -->
+          <div class="absolute top-0 left-0 right-0 h-1 sf-animated-gradient opacity-80"></div>
 
-          <div class="border-2 border-dashed border-primary-300 dark:border-primary-700 rounded-xl p-6 text-center bg-primary-50/50 dark:bg-primary-900/10 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all cursor-pointer">
-            <div class="text-3xl mb-2">📁</div>
-            <p class="text-sm font-medium text-primary-700 dark:text-primary-400">{{ tool.uploadLabel }}</p>
-          </div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+                   style="background: var(--bg-tertiary);">
+                {{ tool.icon }}
+              </div>
+              <div>
+                <h3 class="text-lg font-bold" style="color: var(--text-primary);">{{ tool.title }}</h3>
+                <p class="text-xs" style="color: var(--text-muted);">{{ tool.desc }}</p>
+              </div>
+            </div>
 
-          <button class="btn-primary w-full mt-4">{{ tool.button }}</button>
+            <!-- Upload Area -->
+            <div class="border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 hover:scale-[1.01] group/upload"
+                 style="border-color: var(--border-medium); background: var(--bg-tertiary);"
+                 @mouseenter="$event.currentTarget.style.borderColor = 'var(--accent-warm)'"
+                 @mouseleave="$event.currentTarget.style.borderColor = 'var(--border-medium)'">
+              <div class="text-3xl mb-2">📁</div>
+              <p class="text-sm font-medium" style="color: var(--text-secondary);">{{ tool.uploadLabel }}</p>
+            </div>
 
-          <div class="mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 text-sm text-gray-600 dark:text-gray-400">
-            <strong class="text-gray-900 dark:text-gray-100">Beispiel:</strong><br>
-            <span v-html="tool.demo"></span>
+            <button class="sf-btn sf-btn-primary w-full mt-4 text-sm">
+              {{ tool.button }}
+            </button>
+
+            <!-- Demo Box -->
+            <div class="mt-4 p-4 rounded-xl text-xs leading-relaxed" style="background: var(--bg-tertiary); color: var(--text-muted);">
+              <span class="font-semibold" style="color: var(--text-secondary);">Beispiel:</span><br>
+              <span v-html="tool.demo"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -189,16 +312,26 @@
 
     <!-- Modal -->
     <Teleport to="body">
-      <div v-if="showModal" class="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showModal = false">
-        <div class="bg-white dark:bg-gray-900 w-full max-w-lg rounded-2xl p-6 shadow-2xl max-h-[80vh] overflow-y-auto animate-slide-up">
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">✅ Erledigte Objekte</h3>
+      <div v-if="showModal" class="fixed inset-0 z-[999] flex items-center justify-center p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);" @click.self="showModal = false">
+        <div class="sf-card w-full max-w-lg p-8 max-h-[80vh] overflow-y-auto" style="animation: slideInUp 0.3s ease;">
+          <h3 class="text-xl font-bold mb-6 flex items-center gap-2" style="color: var(--text-primary);">
+            <span class="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style="background: rgba(42, 157, 143, 0.15);">✅</span>
+            Erledigte Objekte
+          </h3>
           <ul class="space-y-2">
-            <li v-for="(item, idx) in store.completedItems.slice().reverse()" :key="idx" class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300">
+            <li v-for="(item, idx) in store.completedItems.slice().reverse()" :key="idx"
+                class="p-3 rounded-xl text-sm flex items-center gap-2"
+                style="background: var(--bg-tertiary); color: var(--text-secondary);">
+              <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: var(--accent-cool);"></span>
               {{ item }}
             </li>
-            <li v-if="store.completedItems.length === 0" class="text-center text-gray-400 py-4 text-sm">Noch nichts erledigt.</li>
+            <li v-if="store.completedItems.length === 0" class="text-center py-6" style="color: var(--text-muted);">
+              Noch nichts erledigt.
+            </li>
           </ul>
-          <button @click="showModal = false" class="mt-4 w-full py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-all">Schliessen</button>
+          <button @click="showModal = false" class="sf-btn w-full mt-6" style="background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-medium);">
+            Schliessen
+          </button>
         </div>
       </div>
     </Teleport>
@@ -209,7 +342,6 @@
 const store = useStudyFlowStore()
 const activeTab = inject('activeTab')
 
-// Form state
 const taskInput = ref('')
 const taskPriority = ref('1')
 const goalInput = ref('')
@@ -220,16 +352,15 @@ const deadlineInput = ref('')
 const deadlineDate = ref('')
 const showModal = ref(false)
 
-const dayNames = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
 const aiTools = [
-  { id: 1, icon: '📄', title: 'KI Zusammenfassung', desc: 'Lade Vorlesungsfolien oder Skripte hoch und lasse dir automatisch Zusammenfassungen erstellen.', uploadLabel: 'Vorlesungsfolien oder Skripte hochladen', button: 'Zusammenfassung generieren', demo: '• Wichtigste Definitionen<br>• Zusammenfassung der Kernaussagen<br>• Pruefungsrelevante Themen' },
-  { id: 2, icon: '🃏', title: 'KI Karteikarten', desc: 'Die KI erstellt automatisch Karteikarten aus deinem Lernmaterial.', uploadLabel: 'Lernmaterial fuer Karteikarten hochladen', button: 'Karteikarten erstellen', demo: '<strong>Frage:</strong> Was ist Polymorphie?<br><br><strong>Antwort:</strong> Objekte koennen unterschiedliche Formen annehmen.' },
-  { id: 3, icon: '📝', title: 'KI Aufgabenerstellung', desc: 'Generiere automatisch Uebungsaufgaben passend zu deinem Lernstoff.', uploadLabel: 'Dokumente zur Aufgabenerstellung hochladen', button: 'Aufgaben generieren', demo: 'Erstelle eine Klasse "Student" mit Konstruktor, Getter und Setter Methoden.' },
-  { id: 4, icon: '❓', title: 'KI Quizerstellung', desc: 'Erstelle automatisch Multiple-Choice-Quizze aus deinen Vorlesungsfolien.', uploadLabel: 'Vorlesungsunterlagen fuer Quiz hochladen', button: 'Quiz generieren', demo: 'Welche Aussage beschreibt Vererbung in Java?<br><br>⭕ Eine Klasse kann Eigenschaften anderer Klassen uebernehmen' },
+  { id: 1, icon: '📄', title: 'KI Zusammenfassung', desc: 'Lade Vorlesungsfolien hoch und erhalte automatisch Zusammenfassungen.', uploadLabel: 'PDF oder Bild hochladen', button: 'Zusammenfassung generieren', demo: '• Wichtigste Definitionen\n• Kernaussagen zusammengefasst\n• Prüfungsrelevante Themen markiert' },
+  { id: 2, icon: '🃏', title: 'KI Karteikarten', desc: 'Erstelle automatisch Lernkarten aus deinem Material.', uploadLabel: 'Lernmaterial hochladen', button: 'Karteikarten erstellen', demo: '<strong>Frage:</strong> Was ist Polymorphie?\n\n<strong>Antwort:</strong> Objekte können unterschiedliche Formen annehmen.' },
+  { id: 3, icon: '📝', title: 'KI Aufgabenerstellung', desc: 'Generiere passende Übungsaufgaben zu deinem Stoff.', uploadLabel: 'Dokumente hochladen', button: 'Aufgaben generieren', demo: 'Erstelle eine Klasse "Student" mit Konstruktor, Getter und Setter Methoden.' },
+  { id: 4, icon: '❓', title: 'KI Quiz', desc: 'Erstelle Multiple-Choice-Quizze aus deinen Folien.', uploadLabel: 'Vorlesungsunterlagen hochladen', button: 'Quiz generieren', demo: 'Welche Aussage beschreibt Vererbung in Java?\n\n⭕ Eine Klasse kann Eigenschaften anderer Klassen übernehmen' },
 ]
 
-// Actions
 const handleAddTask = () => {
   if (!taskInput.value.trim()) return
   store.addTask(taskInput.value.trim(), Number(taskPriority.value))
@@ -259,11 +390,13 @@ const handleAddDeadline = () => {
 
 const openCompletedModal = () => showModal.value = true
 
-// Helpers
-const priorityLabel = (p) => p === 1 ? 'Hoch' : p === 2 ? 'Mittel' : 'Niedrig'
-const priorityBadge = (p) => p === 1 ? 'bg-red-500' : p === 2 ? 'bg-orange-500' : 'bg-green-500'
-const priorityBorder = (p) => p === 1 ? 'border-red-400' : p === 2 ? 'border-orange-400' : 'border-green-400'
-const formatDate = (d) => new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+const priorityLabel = (p) => p === 1 ? 'Dringend' : p === 2 ? 'Wichtig' : 'Optional'
+const priorityColor = (p) => p === 1 ? '#e07a5f' : p === 2 ? '#f4a261' : '#2a9d8f'
+const formatDate = (d) => new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+const isToday = (date) => {
+  const today = new Date()
+  return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()
+}
 
 const weekRange = computed(() => {
   const start = store.weekDays[0]

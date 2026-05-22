@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 export interface Task {
   id: number
   text: string
-  priority: number // 1=Hoch, 2=Mittel, 3=Niedrig
+  priority: number
   done: boolean
   createdAt: string
 }
@@ -91,7 +91,7 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     const t = tasks.value.find(x => x.id === id)
     if (t) {
       t.done = true
-      completedItems.value.push(`✅ Aufgabe: ${t.text}`)
+      completedItems.value.push(`Aufgabe: ${t.text}`)
     }
   }
 
@@ -110,7 +110,7 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     const g = goals.value.find(x => x.id === id)
     if (g) {
       g.done = true
-      completedItems.value.push(`🎯 Ziel: ${g.text}`)
+      completedItems.value.push(`Ziel: ${g.text}`)
     }
   }
 
@@ -133,7 +133,7 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     const d = deadlines.value.find(x => x.id === id)
     if (d) {
       d.done = true
-      completedItems.value.push(`⏰ Deadline: ${d.text}`)
+      completedItems.value.push(`Deadline: ${d.text}`)
     }
   }
 
@@ -141,7 +141,7 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     const e = calendarEntries.value.find(x => x.id === id)
     if (e) {
       e.done = true
-      completedItems.value.push(`📅 ${e.text}`)
+      completedItems.value.push(`Kalender: ${e.text}`)
     }
   }
 
