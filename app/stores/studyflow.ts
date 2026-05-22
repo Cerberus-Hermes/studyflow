@@ -198,7 +198,7 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
   return {
     tasks, goals, studyPlans, deadlines, calendarEntries, completedItems,
     currentWeek, darkMode,
-    loadFromStorage,
+    loadFromStorage, saveToStorage,
     addTask, completeTask,
     addGoal, completeGoal,
     addStudyPlan,

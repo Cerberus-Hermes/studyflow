@@ -78,7 +78,9 @@ const activeTab = useState('activeTab', () => 'orga')
 
 const tabs = [
   { id: 'orga', label: 'Organisation', icon: '📋' },
+  { id: 'calendar', label: 'Kalender', icon: '📅' },
   { id: 'ai', label: 'KI Tools', icon: '🤖' },
+  { id: 'settings', label: 'Einstellungen', icon: '⚙️' },
 ]
 
 provide('activeTab', activeTab)

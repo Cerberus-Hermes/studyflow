@@ -21,7 +21,7 @@
 
       <!-- Bento Dashboard -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left" style="animation: slideInUp 0.5s ease 0.05s forwards; opacity: 0;">
+        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left relative overflow-hidden" style="animation: slideInUp 0.5s ease 0.05s forwards; opacity: 0;">
           <div class="flex items-center justify-between mb-3">
             <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style="background: rgba(224, 122, 95, 0.15);">📝</div>
             <span class="text-xs font-medium px-2.5 py-1 rounded-full" style="background: rgba(224, 122, 95, 0.1); color: var(--accent-warm);">Tasks</span>
@@ -31,7 +31,7 @@
           <div class="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="background: linear-gradient(90deg, var(--accent-warm), var(--accent-warm-light));"></div>
         </button>
 
-        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left" style="animation: slideInUp 0.5s ease 0.1s forwards; opacity: 0;">
+        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left relative overflow-hidden" style="animation: slideInUp 0.5s ease 0.1s forwards; opacity: 0;">
           <div class="flex items-center justify-between mb-3">
             <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style="background: rgba(42, 157, 143, 0.15);">🎯</div>
             <span class="text-xs font-medium px-2.5 py-1 rounded-full" style="background: rgba(42, 157, 143, 0.1); color: var(--accent-cool);">Ziele</span>
@@ -41,7 +41,7 @@
           <div class="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="background: linear-gradient(90deg, var(--accent-cool), var(--accent-cool-light));"></div>
         </button>
 
-        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left" style="animation: slideInUp 0.5s ease 0.15s forwards; opacity: 0;">
+        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left relative overflow-hidden" style="animation: slideInUp 0.5s ease 0.15s forwards; opacity: 0;">
           <div class="flex items-center justify-between mb-3">
             <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style="background: rgba(241, 91, 181, 0.15);">⏰</div>
             <span class="text-xs font-medium px-2.5 py-1 rounded-full" style="background: rgba(241, 91, 181, 0.1); color: var(--accent-rose);">Deadlines</span>
@@ -52,7 +52,7 @@
         </button>
       </div>
 
-      <!-- Tasks & Goals Grid -->
+      <!-- Tasks & Goals & Deadlines & Lernplan Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- To-Do -->
         <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.2s forwards; opacity: 0;">
@@ -207,9 +207,13 @@
           </ul>
         </div>
       </div>
+    </div>
 
-      <!-- Kalender -->
-      <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.4s forwards; opacity: 0;">
+    <!-- ========================= -->
+    <!-- KALENDER TAB -->
+    <!-- ========================= -->
+    <div v-else-if="activeTab === 'calendar'" class="animate-fade-in space-y-6">
+      <div class="sf-card p-6">
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(224, 122, 95, 0.15);">📅</div>
@@ -250,7 +254,7 @@
     <!-- ========================= -->
     <!-- KI TAB -->
     <!-- ========================= -->
-    <div v-else class="animate-fade-in space-y-8">
+    <div v-else-if="activeTab === 'ai'" class="animate-fade-in space-y-8">
       <!-- Hero -->
       <div class="sf-card p-8 text-center relative overflow-hidden" style="animation: slideInUp 0.5s ease forwards;">
         <div class="absolute inset-0 opacity-5">
@@ -267,6 +271,12 @@
         </div>
       </div>
 
+      <!-- API Key Warning -->
+      <div v-if="!apiKey" class="sf-card p-4 text-center" style="background: rgba(224, 122, 95, 0.1); border: 1px solid rgba(224, 122, 95, 0.3);">
+        <p class="text-sm" style="color: var(--accent-warm);">⚠️ Kein Kimi API Key hinterlegt. Gehe zu <button @click="activeTab = 'settings'" class="underline font-bold">Einstellungen</button> um deinen Key einzutragen.
+        </p>
+      </div>
+
       <!-- AI Tools Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <AIUploadCard
@@ -276,6 +286,7 @@
           result-template="summary"
           demo="• Wichtigste Definitionen zusammengefasst&lt;br&gt;• Kernaussagen strukturiert&lt;br&gt;• Prüfungsrelevante Themen markiert"
           :delay="0.1"
+          :api-key="apiKey"
         />
         <AIUploadCard
           icon="🃏"
@@ -284,6 +295,7 @@
           result-template="flashcards"
           demo="&lt;strong&gt;Frage:&lt;/strong&gt; Was ist Polymorphie?&lt;br&gt;&lt;strong&gt;Antwort:&lt;/strong&gt; Objekte können unterschiedliche Formen annehmen."
           :delay="0.15"
+          :api-key="apiKey"
         />
         <AIUploadCard
           icon="📝"
@@ -292,6 +304,7 @@
           result-template="tasks"
           demo="Erstelle eine Klasse &quot;Student&quot; mit Konstruktor, Getter und Setter Methoden."
           :delay="0.2"
+          :api-key="apiKey"
         />
         <AIUploadCard
           icon="❓"
@@ -300,7 +313,79 @@
           result-template="quiz"
           demo="Welche Aussage beschreibt Vererbung in Java?&lt;br&gt;⭕ Eine Klasse kann Eigenschaften anderer Klassen übernehmen"
           :delay="0.25"
+          :api-key="apiKey"
         />
+      </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- EINSTELLUNGEN TAB -->
+    <!-- ========================= -->
+    <div v-else-if="activeTab === 'settings'" class="animate-fade-in space-y-8 max-w-2xl mx-auto">
+      <div class="sf-card p-8 text-center">
+        <div class="w-16 h-16 rounded-2xl sf-animated-gradient flex items-center justify-center text-white text-3xl mx-auto mb-4">
+          ⚙️
+        </div>
+        <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">Einstellungen</h2>
+        <p class="text-sm" style="color: var(--text-muted);">Konfiguriere deine API-Keys und Präferenzen</p>
+      </div>
+
+      <!-- Kimi API Key -->
+      <div class="sf-card p-6 space-y-4">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(155, 93, 229, 0.15);">🔐</div>
+          <div>
+            <h3 class="text-lg font-bold" style="color: var(--text-primary);">Kimi API Key</h3>
+            <p class="text-xs" style="color: var(--text-muted);">Für die KI Lernoptimierung (kimi-k2.6)</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex gap-2">
+            <input
+              v-model="settingsApiKey"
+              :type="showKey ? 'text' : 'password'"
+              placeholder="sk-..."
+              class="sf-input flex-1 font-mono text-sm"
+            />
+            <button @click="showKey = !showKey" class="sf-btn sf-btn-secondary px-4">
+              {{ showKey ? '👁️' : '👁️‍🗨️' }}
+            </button>
+          </div>
+
+          <div class="flex gap-2">
+            <input v-model="settingsBaseUrl" placeholder="https://api.moonshot.cn/v1" class="sf-input flex-1 text-sm" />
+          </div>
+
+          <button @click="saveSettings" class="sf-btn sf-btn-primary w-full">
+            💾 Key speichern
+          </button>
+
+          <div v-if="settingsSaved" class="p-3 rounded-xl text-center text-sm" style="background: rgba(42, 157, 143, 0.15); color: var(--accent-cool);">
+            ✅ Einstellungen gespeichert!
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl text-xs leading-relaxed" style="background: var(--bg-tertiary); color: var(--text-muted);">
+          <strong style="color: var(--text-secondary);">Hinweis:</strong><br>
+          Dein API Key wird lokal im Browser (localStorage) gespeichert. Für Produktiv-Einsatz empfehlen wir eine serverseitige Lösung.<br><br>
+          <strong>Base URL:</strong> Standardmäßig https://api.moonshot.cn/v1 (Kimi/Moonshot).<br>
+          Falls du OpenRouter nutzt: https://openrouter.ai/api/v1
+        </div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="sf-card p-6 space-y-4" style="border: 1px solid rgba(224, 122, 95, 0.3);">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(224, 122, 95, 0.15);">⚠️</div>
+          <div>
+            <h3 class="text-lg font-bold" style="color: var(--text-primary);">Daten zurücksetzen</h3>
+            <p class="text-xs" style="color: var(--text-muted);">Vorsicht — löscht alle deine Daten</p>
+          </div>
+        </div>
+        <button @click="resetAllData" class="sf-btn w-full text-sm" style="background: rgba(224, 122, 95, 0.15); color: var(--accent-warm); border: 1px solid rgba(224, 122, 95, 0.3);">
+          🗑️ Alle Daten löschen
+        </button>
       </div>
     </div>
 
@@ -346,7 +431,49 @@ const deadlineInput = ref('')
 const deadlineDate = ref('')
 const showModal = ref(false)
 
+// Settings
+const settingsApiKey = ref('')
+const settingsBaseUrl = ref('https://api.moonshot.cn/v1')
+const showKey = ref(false)
+const settingsSaved = ref(false)
+
 const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+
+// Load API key from localStorage
+const apiKey = computed(() => {
+  if (process.client) {
+    return localStorage.getItem('sf_kimi_key') || ''
+  }
+  return ''
+})
+
+onMounted(() => {
+  if (process.client) {
+    settingsApiKey.value = localStorage.getItem('sf_kimi_key') || ''
+    settingsBaseUrl.value = localStorage.getItem('sf_kimi_base') || 'https://api.moonshot.cn/v1'
+  }
+})
+
+const saveSettings = () => {
+  if (process.client) {
+    localStorage.setItem('sf_kimi_key', settingsApiKey.value)
+    localStorage.setItem('sf_kimi_base', settingsBaseUrl.value)
+    settingsSaved.value = true
+    setTimeout(() => settingsSaved.value = false, 3000)
+  }
+}
+
+const resetAllData = () => {
+  if (confirm('Wirklich ALLE Daten löschen? Das kann nicht rückgängig gemacht werden!')) {
+    store.tasks = []
+    store.goals = []
+    store.studyPlans = []
+    store.deadlines = []
+    store.calendarEntries = []
+    store.completedItems = []
+    store.saveToStorage?.()
+  }
+}
 
 const handleAddTask = () => {
   if (!taskInput.value.trim()) return
