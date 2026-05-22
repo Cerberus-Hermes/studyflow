@@ -34,7 +34,7 @@
 
       <!-- Text Input Fallback -->
       <div v-if="showTextInput && !hasResult" class="rounded-2xl p-4 space-y-3" style="background: var(--bg-tertiary);">
-        <p class="text-sm" style="color: var(--text-muted);">Füge deinen Lernstoff als Text ein (oder lade eine .txt Datei hoch):</p>
+        <p class="text-sm" style="color: var(--text-muted);">Füge deinen Lernstoff als Text ein:</p>
         <textarea v-model="manualText" rows="6" class="sf-input w-full text-sm font-mono" placeholder="Hier Text einfügen..."></textarea>
         <div class="flex gap-2">
           <button @click="showTextInput = false" class="sf-btn sf-btn-secondary flex-1 text-xs">Zurück</button>
@@ -97,7 +97,6 @@ const props = defineProps({
   demo: String,
   resultTemplate: String,
   delay: { type: Number, default: 0 },
-  apiKey: { type: String, default: '' },
 })
 
 const isDragging = ref(false)
@@ -111,13 +110,6 @@ const manualText = ref('')
 const showTextInput = ref(false)
 
 let progressInterval = null
-
-const systemPrompts = {
-  summary: 'Du bist ein Lernassistent. Fasse den folgenden Lernstoff zusammen. Strukturiere die Ausgabe mit: 1) Kernaussagen (3-5 Bullet Points), 2) Wichtige Definitionen, 3) Prüfungsrelevante Themen. Antworte auf Deutsch.',
-  flashcards: 'Du bist ein Lernassistent. Erstelle aus dem folgenden Lernstoff 5 Lernkarten im Format Frage/Antwort. Gib sie als nummerierte Liste aus. Antworte auf Deutsch.',
-  tasks: 'Du bist ein Lernassistent. Erstelle aus dem folgenden Lernstoff 3 Übungsaufgaben (eine leicht, eine mittel, eine schwer). Gib für jede Aufgabe eine mögliche Lösung. Antworte auf Deutsch.',
-  quiz: 'Du bist ein Lernassistent. Erstelle aus dem folgenden Lernstoff ein Multiple-Choice-Quiz mit 5 Fragen. Jede Frage hat 4 Antwortmöglichkeiten, markiere die richtige. Antworte auf Deutsch.',
-}
 
 const handleDrop = (e) => {
   isDragging.value = false
@@ -134,12 +126,11 @@ const processFile = async (file) => {
   fileName.value = file.name
   const cleanName = file.name.replace(/\.[^/.]+$/, '')
 
-  // Try to read text files
+  // Read text files
   if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
     const text = await file.text()
     startProcessing(text, cleanName)
   } else {
-    // For other files, show text input fallback
     showTextInput.value = true
   }
 }
@@ -166,83 +157,48 @@ const startProcessing = async (content, name) => {
     }
   }, 200)
 
-  if (props.apiKey) {
-    // Real API call
-    try {
-      const baseUrl = localStorage.getItem('sf_kimi_base') || 'https://api.moonshot.cn/v1'
-      const response = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${props.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'kimi-k2-6',
-          messages: [
-            { role: 'system', content: systemPrompts[props.resultTemplate] || systemPrompts.summary },
-            { role: 'user', content: `Lernstoff aus "${name}":\n\n${content.substring(0, 8000)}` },
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
-      })
+  try {
+    // Call our server endpoint (key is hidden on server)
+    const response = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: content.substring(0, 8000),
+        type: props.resultTemplate,
+      }),
+    })
 
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      const aiText = data.choices?.[0]?.message?.content || 'Keine Antwort erhalten.'
-
-      clearInterval(progressInterval)
-      progress.value = 100
-
-      setTimeout(() => {
-        isUploading.value = false
-        hasResult.value = true
-        resultContent.value = formatAIResponse(aiText)
-      }, 500)
-
-    } catch (err) {
-      clearInterval(progressInterval)
-      progress.value = 100
-      setTimeout(() => {
-        isUploading.value = false
-        hasResult.value = true
-        resultContent.value = `<strong style="color: var(--accent-rose);">⚠️ Fehler bei der API-Anfrage:</strong><br>${err.message}<br><br><em>Bitte prüfe deinen API Key in den Einstellungen.</em>`
-      }, 500)
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.statusMessage || `Server Error ${response.status}`)
     }
-  } else {
-    // Simulated fallback
+
+    const data = await response.json()
+    clearInterval(progressInterval)
+    progress.value = 100
+
     setTimeout(() => {
-      clearInterval(progressInterval)
-      progress.value = 100
-      setTimeout(() => {
-        isUploading.value = false
-        hasResult.value = true
-        generateSimulatedResult(name)
-      }, 400)
-    }, 2500)
+      isUploading.value = false
+      hasResult.value = true
+      resultContent.value = formatAIResponse(data.result)
+    }, 500)
+
+  } catch (err) {
+    clearInterval(progressInterval)
+    progress.value = 100
+    setTimeout(() => {
+      isUploading.value = false
+      hasResult.value = true
+      resultContent.value = `<strong style="color: var(--accent-rose);">⚠️ Fehler:</strong><br>${err.message}<br><br><em>Bitte prüfe, ob KIMI_API_KEY auf dem Server konfiguriert ist.</em>`
+    }, 500)
   }
 }
 
 const formatAIResponse = (text) => {
-  // Convert markdown-like formatting to HTML
   return text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n\n/g, '<br><br>')
     .replace(/\n/g, '<br>')
-    .replace(/^\d+\.\s+(.*)$/gm, '<div class="mb-2"><span style="color: var(--accent-warm);">●</span> $1</div>')
-}
-
-const generateSimulatedResult = (name) => {
-  const templates = {
-    summary: `<strong>📄 Zusammenfassung von "${name}"</strong><br><br><strong>Kernaussagen:</strong><br>• Die wichtigsten Konzepte aus ${name} werden systematisch erklärt<br>• Definitionen und Grundlagen stehen im Vordergrund<br>• Prüfungsrelevante Inhalte sind herausgearbeitet<br><br><strong>Definitionen:</strong><br>• Kernbegriffe werden präzise definiert<br>• Unterscheidungen zu verwandten Konzepten werden klar gemacht<br><br><em>Hinweis: Für echte KI-Antworten trage deinen Kimi API Key in den Einstellungen ein.</em>`,
-    flashcards: `<strong>🃏 Karteikarten aus "${name}"</strong><br><br><div class="space-y-2"><div class="p-2 rounded-lg" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle);"><strong style="color: var(--accent-warm);">Frage 1:</strong><br>Was beschreibt der Hauptbegriff aus ${name}?<br><strong style="color: var(--accent-cool);" class="block mt-1">Antwort:</strong> Die zentrale Theorie und ihre Anwendung.</div><div class="p-2 rounded-lg" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle);"><strong style="color: var(--accent-warm);">Frage 2:</strong><br>Welche Methoden werden vorgestellt?<br><strong style="color: var(--accent-cool);" class="block mt-1">Antwort:</strong> Klassische und moderne Ansätze im Vergleich.</div></div><br><em>Hinweis: Für echte KI-Antworten trage deinen Kimi API Key in den Einstellungen ein.</em>`,
-    tasks: `<strong>📝 Übungsaufgaben zu "${name}"</strong><br><br><strong>Aufgabe 1 (Leicht):</strong><br>Erkläre die zentralen Begriffe aus ${name} in eigenen Worten.<br><br><strong>Aufgabe 2 (Mittel):</strong><br>Wende die vorgestellte Methodik auf ein konkretes Beispiel an.<br><br><strong>Aufgabe 3 (Schwer):</strong><br>Vergleiche die Ansätze aus ${name} mit alternativen Methoden.<br><br><em>Hinweis: Für echte KI-Antworten trage deinen Kimi API Key in den Einstellungen ein.</em>`,
-    quiz: `<strong>❓ Quiz aus "${name}"</strong><br><br><div class="p-2 rounded-lg" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle);"><strong>Frage 1:</strong><br>Welche Aussage trifft auf ${name} zu?<br><br>⭕ Es beschreibt die Theorie korrekt<br>⚫ Es ist irrelevant für die Praxis<br>⚫ Es widerspricht bekannten Fakten<br>⚫ Es ist nur für Experten relevant</div><br><em>Hinweis: Für echte KI-Antworten trage deinen Kimi API Key in den Einstellungen ein.</em>`,
-  }
-  resultContent.value = templates[props.resultTemplate] || templates.summary
 }
 
 const reset = () => {

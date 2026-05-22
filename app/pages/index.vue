@@ -271,12 +271,6 @@
         </div>
       </div>
 
-      <!-- API Key Warning -->
-      <div v-if="!apiKey" class="sf-card p-4 text-center" style="background: rgba(224, 122, 95, 0.1); border: 1px solid rgba(224, 122, 95, 0.3);">
-        <p class="text-sm" style="color: var(--accent-warm);">⚠️ Kein Kimi API Key hinterlegt. Gehe zu <button @click="activeTab = 'settings'" class="underline font-bold">Einstellungen</button> um deinen Key einzutragen.
-        </p>
-      </div>
-
       <!-- AI Tools Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <AIUploadCard
@@ -286,7 +280,6 @@
           result-template="summary"
           demo="• Wichtigste Definitionen zusammengefasst&lt;br&gt;• Kernaussagen strukturiert&lt;br&gt;• Prüfungsrelevante Themen markiert"
           :delay="0.1"
-          :api-key="apiKey"
         />
         <AIUploadCard
           icon="🃏"
@@ -295,7 +288,6 @@
           result-template="flashcards"
           demo="&lt;strong&gt;Frage:&lt;/strong&gt; Was ist Polymorphie?&lt;br&gt;&lt;strong&gt;Antwort:&lt;/strong&gt; Objekte können unterschiedliche Formen annehmen."
           :delay="0.15"
-          :api-key="apiKey"
         />
         <AIUploadCard
           icon="📝"
@@ -304,7 +296,6 @@
           result-template="tasks"
           demo="Erstelle eine Klasse &quot;Student&quot; mit Konstruktor, Getter und Setter Methoden."
           :delay="0.2"
-          :api-key="apiKey"
         />
         <AIUploadCard
           icon="❓"
@@ -313,7 +304,6 @@
           result-template="quiz"
           demo="Welche Aussage beschreibt Vererbung in Java?&lt;br&gt;⭕ Eine Klasse kann Eigenschaften anderer Klassen übernehmen"
           :delay="0.25"
-          :api-key="apiKey"
         />
       </div>
     </div>
@@ -327,50 +317,36 @@
           ⚙️
         </div>
         <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">Einstellungen</h2>
-        <p class="text-sm" style="color: var(--text-muted);">Konfiguriere deine API-Keys und Präferenzen</p>
+        <p class="text-sm" style="color: var(--text-muted);">Konfiguration und System-Informationen</p>
       </div>
 
-      <!-- Kimi API Key -->
+      <!-- Server Config Info -->
       <div class="sf-card p-6 space-y-4">
         <div class="flex items-center gap-3 mb-2">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(155, 93, 229, 0.15);">🔐</div>
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(42, 157, 143, 0.15);">🔐</div>
           <div>
-            <h3 class="text-lg font-bold" style="color: var(--text-primary);">Kimi API Key</h3>
-            <p class="text-xs" style="color: var(--text-muted);">Für die KI Lernoptimierung (kimi-k2.6)</p>
+            <h3 class="text-lg font-bold" style="color: var(--text-primary);">KI-Konfiguration</h3>
+            <p class="text-xs" style="color: var(--text-muted);">Serverseitige API-Verwaltung</p>
           </div>
         </div>
 
-        <div class="space-y-3">
-          <div class="flex gap-2">
-            <input
-              v-model="settingsApiKey"
-              :type="showKey ? 'text' : 'password'"
-              placeholder="sk-..."
-              class="sf-input flex-1 font-mono text-sm"
-            />
-            <button @click="showKey = !showKey" class="sf-btn sf-btn-secondary px-4">
-              {{ showKey ? '👁️' : '👁️‍🗨️' }}
-            </button>
+        <div class="p-4 rounded-xl space-y-2" style="background: var(--bg-tertiary);">
+          <div class="flex items-center gap-2 text-sm">
+            <span class="text-xl">🛡️</span>
+            <span style="color: var(--text-secondary);">Der Kimi API Key wird <strong style="color: var(--accent-cool);">serverseitig</strong> verwaltet</span>
           </div>
-
-          <div class="flex gap-2">
-            <input v-model="settingsBaseUrl" placeholder="https://api.moonshot.cn/v1" class="sf-input flex-1 text-sm" />
-          </div>
-
-          <button @click="saveSettings" class="sf-btn sf-btn-primary w-full">
-            💾 Key speichern
-          </button>
-
-          <div v-if="settingsSaved" class="p-3 rounded-xl text-center text-sm" style="background: rgba(42, 157, 143, 0.15); color: var(--accent-cool);">
-            ✅ Einstellungen gespeichert!
-          </div>
+          <p class="text-xs pl-8" style="color: var(--text-muted);">
+            Der Key liegt nie im Browser. Er wird über die Umgebungsvariable <code class="px-1 py-0.5 rounded text-xs" style="background: var(--bg-primary); color: var(--accent-warm);">KIMI_API_KEY</code> auf dem Server konfiguriert.
+          </p>
         </div>
 
-        <div class="p-4 rounded-xl text-xs leading-relaxed" style="background: var(--bg-tertiary); color: var(--text-muted);">
-          <strong style="color: var(--text-secondary);">Hinweis:</strong><br>
-          Dein API Key wird lokal im Browser (localStorage) gespeichert. Für Produktiv-Einsatz empfehlen wir eine serverseitige Lösung.<br><br>
-          <strong>Base URL:</strong> Standardmäßig https://api.moonshot.cn/v1 (Kimi/Moonshot).<br>
-          Falls du OpenRouter nutzt: https://openrouter.ai/api/v1
+        <div class="p-4 rounded-xl" style="background: rgba(155, 93, 229, 0.1); border: 1px solid rgba(155, 93, 229, 0.2);">
+          <p class="text-sm font-semibold mb-2" style="color: var(--accent-purple);">📚 Für Entwickler / Deployment</p>
+          <div class="space-y-1 text-xs" style="color: var(--text-muted);">
+            <p><strong style="color: var(--text-secondary);">Vercel:</strong> Settings → Environment Variables → <code>KIMI_API_KEY=sk-...</code></p>
+            <p><strong style="color: var(--text-secondary);">Lokal:</strong> <code>.env</code> Datei mit <code>KIMI_API_KEY=sk-...</code></p>
+            <p><strong style="color: var(--text-secondary);">Optional:</strong> <code>KIMI_BASE_URL=https://api.moonshot.cn/v1</code></p>
+          </div>
         </div>
       </div>
 
@@ -431,37 +407,7 @@ const deadlineInput = ref('')
 const deadlineDate = ref('')
 const showModal = ref(false)
 
-// Settings
-const settingsApiKey = ref('')
-const settingsBaseUrl = ref('https://api.moonshot.cn/v1')
-const showKey = ref(false)
-const settingsSaved = ref(false)
-
 const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
-
-// Load API key from localStorage
-const apiKey = computed(() => {
-  if (process.client) {
-    return localStorage.getItem('sf_kimi_key') || ''
-  }
-  return ''
-})
-
-onMounted(() => {
-  if (process.client) {
-    settingsApiKey.value = localStorage.getItem('sf_kimi_key') || ''
-    settingsBaseUrl.value = localStorage.getItem('sf_kimi_base') || 'https://api.moonshot.cn/v1'
-  }
-})
-
-const saveSettings = () => {
-  if (process.client) {
-    localStorage.setItem('sf_kimi_key', settingsApiKey.value)
-    localStorage.setItem('sf_kimi_base', settingsBaseUrl.value)
-    settingsSaved.value = true
-    setTimeout(() => settingsSaved.value = false, 3000)
-  }
-}
 
 const resetAllData = () => {
   if (confirm('Wirklich ALLE Daten löschen? Das kann nicht rückgängig gemacht werden!')) {
