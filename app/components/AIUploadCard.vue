@@ -28,11 +28,22 @@
         <p class="text-sm font-semibold mb-1" style="color: var(--text-secondary);">
           {{ isDragging ? 'Loslassen zum Hochladen!' : 'Datei hierhin ziehen' }}
         </p>
-        <p class="text-xs" style="color: var(--text-muted);">PDF, TXT, Bilder — oder klicken zum Auswählen</p>
-        <input ref="fileInput" type="file" accept=".pdf,.txt,.md,.docx,image/*" class="hidden" @change="handleFileSelect" />
+        <p class="text-xs" style="color: var(--text-muted);">Nur .txt und .md Dateien — oder klicken zum Auswählen</p>
+        <input ref="fileInput" type="file" accept=".txt,.md" class="hidden" @change="handleFileSelect" />
       </div>
 
-      <!-- Text Input Fallback -->
+      <!-- Unsupported File Warning -->
+      <div v-if="showUnsupportedWarning" class="rounded-2xl p-6 text-center" style="background: rgba(224, 122, 95, 0.1); border: 1px solid rgba(224, 122, 95, 0.3);">
+        <div class="text-3xl mb-2">⚠️</div>
+        <p class="text-sm font-semibold mb-1" style="color: var(--accent-warm);">{{ unsupportedFileName }} wird nicht unterstützt</p>
+        <p class="text-xs mb-3" style="color: var(--text-muted);">PDFs und Bilder können wir nicht direkt auslesen. Bitte kopiere den Text oder speichere ihn als .txt Datei.</p>
+        <div class="flex gap-2 justify-center">
+          <button @click="showUnsupportedWarning = false" class="sf-btn sf-btn-secondary text-xs">Zurück</button>
+          <button @click="showTextInput = true; showUnsupportedWarning = false" class="sf-btn sf-btn-primary text-xs">💬 Text manuell eingeben</button>
+        </div>
+      </div>
+
+      <!-- Text Input -->
       <div v-if="showTextInput && !hasResult" class="rounded-2xl p-4 space-y-3" style="background: var(--bg-tertiary);">
         <p class="text-sm" style="color: var(--text-muted);">Füge deinen Lernstoff als Text ein:</p>
         <textarea v-model="manualText" rows="6" class="sf-input w-full text-sm font-mono" placeholder="Hier Text einfügen..."></textarea>
@@ -105,9 +116,10 @@ const hasResult = ref(false)
 const uploadStep = ref('upload')
 const progress = ref(0)
 const resultContent = ref('')
-const fileName = ref('')
 const manualText = ref('')
 const showTextInput = ref(false)
+const showUnsupportedWarning = ref(false)
+const unsupportedFileName = ref('')
 
 let progressInterval = null
 
@@ -123,16 +135,16 @@ const handleFileSelect = (e) => {
 }
 
 const processFile = async (file) => {
-  fileName.value = file.name
-  const cleanName = file.name.replace(/\.[^/.]+$/, '')
+  const isTextFile = file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')
 
-  // Read text files
-  if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
-    const text = await file.text()
-    startProcessing(text, cleanName)
-  } else {
-    showTextInput.value = true
+  if (!isTextFile) {
+    unsupportedFileName.value = file.name
+    showUnsupportedWarning.value = true
+    return
   }
+
+  const text = await file.text()
+  startProcessing(text, file.name.replace(/\.[^/.]+$/, ''))
 }
 
 const processManualText = () => {
@@ -142,6 +154,7 @@ const processManualText = () => {
 
 const startProcessing = async (content, name) => {
   showTextInput.value = false
+  showUnsupportedWarning.value = false
   isUploading.value = true
   progress.value = 0
   uploadStep.value = 'upload'
@@ -205,9 +218,10 @@ const reset = () => {
   hasResult.value = false
   isUploading.value = false
   progress.value = 0
-  fileName.value = ''
   manualText.value = ''
   showTextInput.value = false
+  showUnsupportedWarning.value = false
+  unsupportedFileName.value = ''
 }
 
 const copyResult = () => {
