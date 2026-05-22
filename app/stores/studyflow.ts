@@ -45,7 +45,7 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
   const calendarEntries = ref<CalendarEntry[]>([])
   const completedItems = ref<string[]>([])
   const currentWeek = ref(new Date())
-  const darkMode = ref(false)
+  const darkMode = ref(true)
 
   // Load from localStorage
   const loadFromStorage = () => {
@@ -56,8 +56,11 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
       deadlines.value = JSON.parse(localStorage.getItem('sf_deadlines') || '[]')
       calendarEntries.value = JSON.parse(localStorage.getItem('sf_calendar') || '[]')
       completedItems.value = JSON.parse(localStorage.getItem('sf_completed') || '[]')
-      darkMode.value = localStorage.getItem('sf_dark') === 'true'
+      // Default to dark mode, check if user explicitly switched to light
+      const savedDark = localStorage.getItem('sf_dark')
+      darkMode.value = savedDark === null ? true : savedDark === 'true'
       if (darkMode.value) document.documentElement.classList.add('dark')
+      else document.documentElement.classList.remove('dark')
     }
   }
 
