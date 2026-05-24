@@ -45,6 +45,7 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
   const calendarEntries = ref<CalendarEntry[]>([])
   const completedItems = ref<string[]>([])
   const currentWeek = ref(new Date())
+  const currentMonth = ref(new Date())
   const darkMode = ref(true)
 
   // Load from localStorage
@@ -56,7 +57,6 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
       deadlines.value = JSON.parse(localStorage.getItem('sf_deadlines') || '[]')
       calendarEntries.value = JSON.parse(localStorage.getItem('sf_calendar') || '[]')
       completedItems.value = JSON.parse(localStorage.getItem('sf_completed') || '[]')
-      // Default to dark mode, check if user explicitly switched to light
       const savedDark = localStorage.getItem('sf_dark')
       darkMode.value = savedDark === null ? true : savedDark === 'true'
       if (darkMode.value) document.documentElement.classList.add('dark')
@@ -161,10 +161,19 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     currentWeek.value = new Date(currentWeek.value.getTime() + dir * 7 * 24 * 60 * 60 * 1000)
   }
 
+  const changeMonth = (dir: number) => {
+    const d = new Date(currentMonth.value)
+    d.setMonth(d.getMonth() + dir)
+    currentMonth.value = d
+  }
+
   // Getters
   const activeTasks = computed(() => tasks.value.filter(t => !t.done).sort((a, b) => a.priority - b.priority))
+  const doneTasks = computed(() => tasks.value.filter(t => t.done))
   const activeGoals = computed(() => goals.value.filter(g => !g.done))
+  const doneGoals = computed(() => goals.value.filter(g => g.done))
   const activeDeadlines = computed(() => deadlines.value.filter(d => !d.done))
+  const doneDeadlines = computed(() => deadlines.value.filter(d => d.done))
   const upcomingStudyPlans = computed(() => {
     const today = new Date().toISOString().split('T')[0]
     return studyPlans.value.filter(s => s.date >= today).sort((a, b) => a.date.localeCompare(b.date))
@@ -190,6 +199,30 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     return days
   })
 
+  const monthName = computed(() => {
+    return currentMonth.value.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
+  })
+
+  const monthDays = computed(() => {
+    const year = currentMonth.value.getFullYear()
+    const month = currentMonth.value.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    const daysInMonth = lastDay.getDate()
+    const startDayOfWeek = firstDay.getDay() || 7 // 1=Mo, 7=So
+
+    const days = []
+    // Padding for days before month starts
+    for (let i = 1; i < startDayOfWeek; i++) {
+      days.push(null)
+    }
+    // Actual days
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i))
+    }
+    return days
+  })
+
   const entriesForDay = (date: Date) => {
     const ds = date.toISOString().split('T')[0]
     return calendarEntries.value.filter(e => e.date === ds && !e.done)
@@ -197,15 +230,15 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
 
   return {
     tasks, goals, studyPlans, deadlines, calendarEntries, completedItems,
-    currentWeek, darkMode,
+    currentWeek, currentMonth, darkMode,
     loadFromStorage, saveToStorage,
     addTask, completeTask,
     addGoal, completeGoal,
     addStudyPlan,
     addDeadline, completeDeadline,
     completeCalendarEntry,
-    toggleDarkMode, changeWeek,
-    activeTasks, activeGoals, activeDeadlines, upcomingStudyPlans,
-    weekDays, entriesForDay,
+    toggleDarkMode, changeWeek, changeMonth,
+    activeTasks, doneTasks, activeGoals, doneGoals, activeDeadlines, doneDeadlines, upcomingStudyPlans,
+    weekDays, monthName, monthDays, entriesForDay,
   }
 })

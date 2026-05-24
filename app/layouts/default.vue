@@ -77,6 +77,7 @@ const store = useStudyFlowStore()
 const activeTab = useState('activeTab', () => 'orga')
 
 const tabs = [
+  { id: 'dashboard', label: 'Dashboard', icon: '📊' },
   { id: 'orga', label: 'Organisation', icon: '📋' },
   { id: 'calendar', label: 'Kalender', icon: '📅' },
   { id: 'ai', label: 'KI Tools', icon: '🤖' },
