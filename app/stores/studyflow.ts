@@ -94,7 +94,8 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     const t = tasks.value.find(x => x.id === id)
     if (t) {
       t.done = true
-      completedItems.value.push(`Aufgabe: ${t.text}`)
+      const today = new Date().toLocaleDateString('de-DE')
+      completedItems.value.push(`Aufgabe: ${t.text} (${today})`)
     }
   }
 
@@ -113,7 +114,8 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     const g = goals.value.find(x => x.id === id)
     if (g) {
       g.done = true
-      completedItems.value.push(`Ziel: ${g.text}`)
+      const today = new Date().toLocaleDateString('de-DE')
+      completedItems.value.push(`Ziel: ${g.text} (${today})`)
     }
   }
 
@@ -136,7 +138,8 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     const d = deadlines.value.find(x => x.id === id)
     if (d) {
       d.done = true
-      completedItems.value.push(`Deadline: ${d.text}`)
+      const today = new Date().toLocaleDateString('de-DE')
+      completedItems.value.push(`Deadline: ${d.text} (${today})`)
     }
   }
 
@@ -144,7 +147,20 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     const e = calendarEntries.value.find(x => x.id === id)
     if (e) {
       e.done = true
-      completedItems.value.push(`Kalender: ${e.text}`)
+      const today = new Date().toLocaleDateString('de-DE')
+      completedItems.value.push(`Kalender: ${e.text} (${today})`)
+    }
+  }
+
+  const moveCalendarEntry = (id: number, newDate: string) => {
+    const e = calendarEntries.value.find(x => x.id === id)
+    if (e) {
+      e.date = newDate
+      // Also update corresponding goal/deadline
+      const goal = goals.value.find(g => g.text === e.text && !g.done)
+      if (goal) goal.date = newDate
+      const deadline = deadlines.value.find(d => d.text === e.text && !d.done)
+      if (deadline) deadline.date = newDate
     }
   }
 
@@ -228,6 +244,70 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     return calendarEntries.value.filter(e => e.date === ds && !e.done)
   }
 
+  // Streak tracking
+  const streak = computed(() => {
+    const dates = completedItems.value.map(item => {
+      const match = item.match(/\(([^)]+)\)/)
+      return match ? match[1] : null
+    }).filter(Boolean).sort().reverse()
+    
+    if (dates.length === 0) return { current: 0, best: 0 }
+    
+    let current = 0
+    let best = 0
+    let temp = 1
+    
+    for (let i = 0; i < dates.length - 1; i++) {
+      const d1 = new Date(dates[i].split('.').reverse().join('-'))
+      const d2 = new Date(dates[i + 1].split('.').reverse().join('-'))
+      const diff = Math.round((d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24))
+      if (diff === 1) temp++
+      else {
+        best = Math.max(best, temp)
+        temp = 1
+      }
+    }
+    best = Math.max(best, temp)
+    
+    // Check current streak
+    const today = new Date().toLocaleDateString('de-DE')
+    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('de-DE')
+    
+    if (dates.includes(today)) current = 1
+    else if (dates.includes(yesterday)) current = 1
+    else return { current: 0, best }
+    
+    for (let i = 1; i < 365; i++) {
+      const d = new Date(Date.now() - i * 86400000).toLocaleDateString('de-DE')
+      if (dates.includes(d)) current++
+      else break
+    }
+    
+    return { current, best }
+  })
+
+  // Export data
+  const exportData = () => {
+    const data = {
+      tasks: tasks.value,
+      goals: goals.value,
+      studyPlans: studyPlans.value,
+      deadlines: deadlines.value,
+      completedItems: completedItems.value,
+      exportedAt: new Date().toISOString(),
+    }
+    return JSON.stringify(data, null, 2)
+  }
+
+  const exportCSV = () => {
+    let csv = 'Typ,Text,Datum,Status,Priorität\n'
+    tasks.value.forEach(t => csv += `Task,"${t.text}",,"${t.done ? 'Erledigt' : 'Offen'}",${t.priority}\n`)
+    goals.value.forEach(g => csv += `Ziel,"${g.text}",${g.date},"${g.done ? 'Erledigt' : 'Offen'}",\n`)
+    deadlines.value.forEach(d => csv += `Deadline,"${d.text}",${d.date},"${d.done ? 'Erledigt' : 'Offen'}",\n`)
+    studyPlans.value.forEach(s => csv += `Lernplan,"${s.subject}",${s.date},,\n`)
+    return csv
+  }
+
   return {
     tasks, goals, studyPlans, deadlines, calendarEntries, completedItems,
     currentWeek, currentMonth, darkMode,
@@ -236,9 +316,10 @@ export const useStudyFlowStore = defineStore('studyflow', () => {
     addGoal, completeGoal,
     addStudyPlan,
     addDeadline, completeDeadline,
-    completeCalendarEntry,
+    completeCalendarEntry, moveCalendarEntry,
     toggleDarkMode, changeWeek, changeMonth,
     activeTasks, doneTasks, activeGoals, doneGoals, activeDeadlines, doneDeadlines, upcomingStudyPlans,
     weekDays, monthName, monthDays, entriesForDay,
+    streak, exportData, exportCSV,
   }
 })
