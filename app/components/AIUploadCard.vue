@@ -28,15 +28,21 @@
         <p class="text-sm font-semibold mb-1" style="color: var(--text-secondary);">
           {{ isDragging ? 'Loslassen zum Hochladen!' : 'Datei hierhin ziehen' }}
         </p>
-        <p class="text-xs" style="color: var(--text-muted);">Nur .txt und .md Dateien — oder klicken zum Auswählen</p>
-        <input ref="fileInput" type="file" accept=".txt,.md" class="hidden" @change="handleFileSelect" />
+        <p class="text-xs" style="color: var(--text-muted);">PDF, Bilder (PNG, JPG, WEBP) oder Text (.txt, .md) — max. 20 MB</p>
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.webp,.gif,application/pdf,image/*,text/plain,text/markdown"
+          class="hidden"
+          @change="handleFileSelect"
+        />
       </div>
 
       <!-- Unsupported File Warning -->
       <div v-if="showUnsupportedWarning" class="rounded-2xl p-6 text-center" style="background: rgba(224, 122, 95, 0.1); border: 1px solid rgba(224, 122, 95, 0.3);">
         <div class="text-3xl mb-2">⚠️</div>
         <p class="text-sm font-semibold mb-1" style="color: var(--accent-warm);">{{ unsupportedFileName }} wird nicht unterstützt</p>
-        <p class="text-xs mb-3" style="color: var(--text-muted);">PDFs und Bilder können wir nicht direkt auslesen. Bitte kopiere den Text oder speichere ihn als .txt Datei.</p>
+        <p class="text-xs mb-3" style="color: var(--text-muted);">Erlaubt: PDF, PNG, JPG, WEBP, GIF, TXT, MD</p>
         <div class="flex gap-2 justify-center">
           <button @click="showUnsupportedWarning = false" class="sf-btn sf-btn-secondary text-xs">Zurück</button>
           <button @click="showTextInput = true; showUnsupportedWarning = false" class="sf-btn sf-btn-primary text-xs">💬 Text manuell eingeben</button>
@@ -110,6 +116,8 @@ const props = defineProps({
   delay: { type: Number, default: 0 },
 })
 
+const MAX_FILE_BYTES = 20 * 1024 * 1024
+
 const isDragging = ref(false)
 const isUploading = ref(false)
 const hasResult = ref(false)
@@ -123,6 +131,17 @@ const unsupportedFileName = ref('')
 
 let progressInterval = null
 
+const TEXT_EXT = /\.(txt|md)$/i
+const MEDIA_EXT = /\.(pdf|png|jpe?g|webp|gif)$/i
+
+function getFileKind(file) {
+  const name = file.name.toLowerCase()
+  if (file.type === 'text/plain' || file.type === 'text/markdown' || TEXT_EXT.test(name)) return 'text'
+  if (file.type === 'application/pdf' || name.endsWith('.pdf')) return 'binary'
+  if (file.type.startsWith('image/') || MEDIA_EXT.test(name)) return 'binary'
+  return 'unsupported'
+}
+
 const handleDrop = (e) => {
   isDragging.value = false
   const files = e.dataTransfer.files
@@ -132,34 +151,44 @@ const handleDrop = (e) => {
 const handleFileSelect = (e) => {
   const files = e.target.files
   if (files.length > 0) processFile(files[0])
+  e.target.value = ''
 }
 
 const processFile = async (file) => {
-  const isTextFile = file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')
+  const kind = getFileKind(file)
 
-  if (!isTextFile) {
+  if (kind === 'unsupported') {
     unsupportedFileName.value = file.name
     showUnsupportedWarning.value = true
     return
   }
 
-  const text = await file.text()
-  startProcessing(text, file.name.replace(/\.[^/.]+$/, ''))
+  if (file.size > MAX_FILE_BYTES) {
+    unsupportedFileName.value = `${file.name} (zu groß, max. 20 MB)`
+    showUnsupportedWarning.value = true
+    return
+  }
+
+  if (kind === 'text') {
+    const text = await file.text()
+    startProcessing({ mode: 'text', content: text, label: file.name.replace(/\.[^/.]+$/, '') })
+  } else {
+    startProcessing({ mode: 'file', file, label: file.name })
+  }
 }
 
 const processManualText = () => {
   if (!manualText.value.trim()) return
-  startProcessing(manualText.value, 'Manuelle Eingabe')
+  startProcessing({ mode: 'text', content: manualText.value, label: 'Manuelle Eingabe' })
 }
 
-const startProcessing = async (content, name) => {
+const startProcessing = async ({ mode, content, file, label }) => {
   showTextInput.value = false
   showUnsupportedWarning.value = false
   isUploading.value = true
   progress.value = 0
   uploadStep.value = 'upload'
 
-  // Simulate progress for UX
   progressInterval = setInterval(() => {
     progress.value += Math.random() * 12 + 3
     if (progress.value >= 30) uploadStep.value = 'process'
@@ -171,15 +200,23 @@ const startProcessing = async (content, name) => {
   }, 200)
 
   try {
-    // Call our server endpoint (key is hidden on server)
-    const response = await fetch('/api/ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content: content.substring(0, 8000),
-        type: props.resultTemplate,
-      }),
-    })
+    let response
+
+    if (mode === 'file') {
+      const formData = new FormData()
+      formData.append('file', file, file.name)
+      formData.append('type', props.resultTemplate)
+      response = await fetch('/api/ai', { method: 'POST', body: formData })
+    } else {
+      response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: content.substring(0, 8000),
+          type: props.resultTemplate,
+        }),
+      })
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -195,14 +232,13 @@ const startProcessing = async (content, name) => {
       hasResult.value = true
       resultContent.value = formatAIResponse(data.result)
     }, 500)
-
   } catch (err) {
     clearInterval(progressInterval)
     progress.value = 100
     setTimeout(() => {
       isUploading.value = false
       hasResult.value = true
-      resultContent.value = `<strong style="color: var(--accent-rose);">⚠️ Fehler:</strong><br>${err.message}<br><br><em>Bitte prüfe, ob KIMI_API_KEY auf dem Server konfiguriert ist.</em>`
+      resultContent.value = `<strong style="color: var(--accent-rose);">⚠️ Fehler:</strong><br>${err.message}`
     }, 500)
   }
 }

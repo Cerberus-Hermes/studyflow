@@ -306,7 +306,7 @@
         <div class="relative z-10">
           <div class="w-20 h-20 rounded-3xl sf-animated-gradient flex items-center justify-center text-white text-4xl mx-auto mb-4 shadow-2xl">🤖</div>
           <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">KI Lernoptimierung</h2>
-          <p class="text-sm max-w-lg mx-auto" style="color: var(--text-muted);">Lade dein Lernmaterial hoch und erhalte sofort Ergebnisse.</p>
+          <p class="text-sm max-w-lg mx-auto" style="color: var(--text-muted);">Lade PDFs, Fotos von Folien oder Text hoch — die KI erstellt sofort Ergebnisse.</p>
         </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
