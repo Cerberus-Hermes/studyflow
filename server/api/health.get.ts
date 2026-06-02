@@ -15,10 +15,10 @@ export default defineEventHandler(async () => {
   if (apiKey && apiKey.startsWith('sk-')) {
     const configs = []
     if (baseUrl) {
-      configs.push({ baseUrl, model: 'kimi-k2-6', name: 'Custom' })
+      configs.push({ baseUrl, model: process.env.KIMI_MODEL || 'kimi-k2.6', name: 'Custom' })
     } else {
-      configs.push({ baseUrl: 'https://api.moonshot.cn/v1', model: 'kimi-k2-6', name: 'Moonshot' })
-      configs.push({ baseUrl: 'https://openrouter.ai/api/v1', model: 'moonshot/kimi-k2-6', name: 'OpenRouter' })
+      configs.push({ baseUrl: 'https://api.moonshot.ai/v1', model: 'kimi-k2.6', name: 'Moonshot AI' })
+      configs.push({ baseUrl: 'https://api.moonshot.cn/v1', model: 'kimi-k2.6', name: 'Moonshot CN' })
     }
 
     for (const config of configs) {
@@ -33,7 +33,8 @@ export default defineEventHandler(async () => {
           body: JSON.stringify({
             model: config.model,
             messages: [{ role: 'user', content: 'Hi' }],
-            max_tokens: 5,
+            max_completion_tokens: 5,
+            thinking: { type: 'disabled' },
           }),
         })
 

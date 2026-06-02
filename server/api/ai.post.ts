@@ -27,21 +27,20 @@ export default defineEventHandler(async (event) => {
     // Custom base URL set by user
     configs.push({
       baseUrl,
-      model: process.env.KIMI_MODEL || 'kimi-k2-6',
+      model: process.env.KIMI_MODEL || 'kimi-k2.6',
       name: 'Custom',
     })
   } else {
-    // Try Moonshot direct first
+    // Try international endpoint first, then China
+    configs.push({
+      baseUrl: 'https://api.moonshot.ai/v1',
+      model: 'kimi-k2.6',
+      name: 'Moonshot AI',
+    })
     configs.push({
       baseUrl: 'https://api.moonshot.cn/v1',
-      model: 'kimi-k2-6',
-      name: 'Moonshot',
-    })
-    // Then OpenRouter fallback
-    configs.push({
-      baseUrl: 'https://openrouter.ai/api/v1',
-      model: 'moonshot/kimi-k2-6',
-      name: 'OpenRouter',
+      model: 'kimi-k2.6',
+      name: 'Moonshot CN',
     })
   }
 
@@ -51,8 +50,8 @@ export default defineEventHandler(async (event) => {
       { role: 'system', content: systemPrompts[type] || systemPrompts.summary },
       { role: 'user', content: `Lernstoff:\n\n${content.substring(0, 8000)}` },
     ],
-    temperature: 0.7,
-    max_tokens: 2000,
+    max_completion_tokens: 2000,
+    thinking: { type: 'disabled' },
   }
 
   let lastError = ''
@@ -98,6 +97,6 @@ export default defineEventHandler(async (event) => {
   console.error('[AI API] All providers failed. Last error:', lastError)
   throw createError({
     statusCode: 502,
-    statusMessage: `Kimi API Error: ${lastError}. Dein Key funktioniert weder bei Moonshot (api.moonshot.cn) noch bei OpenRouter. Prüfe: 1) Ist der Key gültig? 2) Kommt er von der richtigen Plattform? 3) Setze KIMI_BASE_URL in Vercel wenn du einen anderen Provider nutzt.`,
+    statusMessage: `Kimi API Error: ${lastError}. Prüfe: 1) Ist der Key gültig? 2) Passt KIMI_BASE_URL zur Plattform (moonshot.cn vs moonshot.ai)? 3) KIMI_MODEL=kimi-k2.6`,
   })
 })

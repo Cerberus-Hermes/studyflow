@@ -346,7 +346,7 @@
           <div class="space-y-1 text-xs" style="color: var(--text-muted);">
             <p><strong style="color: var(--text-secondary);">Vercel:</strong> Settings → Environment Variables → <code>KIMI_API_KEY=sk-...</code></p>
             <p><strong style="color: var(--text-secondary);">Lokal:</strong> <code>.env</code> Datei mit <code>KIMI_API_KEY=sk-...</code></p>
-            <p><strong style="color: var(--text-secondary);">Optional:</strong> <code>KIMI_BASE_URL=https://api.moonshot.cn/v1</code></p>
+            <p><strong style="color: var(--text-secondary);">Optional:</strong> <code>KIMI_BASE_URL=https://api.moonshot.ai/v1</code> (international) oder <code>.cn</code> (China)</p>
           </div>
         </div>
       </div>

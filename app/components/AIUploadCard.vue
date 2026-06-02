@@ -183,7 +183,7 @@ const startProcessing = async (content, name) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.statusMessage || `Server Error ${response.status}`)
+      throw new Error(errorData.message || errorData.statusMessage || `Server Error ${response.status}`)
     }
 
     const data = await response.json()
