@@ -6,13 +6,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Content required' })
   }
 
-  // API Key from environment variable (server-side only!)
   const apiKey = process.env.KIMI_API_KEY
-  const baseUrl = process.env.KIMI_BASE_URL || 'https://api.moonshot.cn/v1'
-
-  console.log('[AI API] Request received')
-  console.log('[AI API] Base URL:', baseUrl)
-  console.log('[AI API] Key configured:', apiKey ? `Yes (starts with ${apiKey.substring(0, 7)}...)` : 'NO')
+  let baseUrl = process.env.KIMI_BASE_URL
 
   if (!apiKey) {
     throw createError({ statusCode: 500, statusMessage: 'KIMI_API_KEY not configured on server' })
@@ -25,45 +20,84 @@ export default defineEventHandler(async (event) => {
     quiz: 'Du bist ein Lernassistent. Erstelle aus dem folgenden Lernstoff ein Multiple-Choice-Quiz mit 5 Fragen. Jede Frage hat 4 Antwortmöglichkeiten, markiere die richtige. Antworte auf Deutsch.',
   }
 
-  try {
-    const requestBody = {
-      model: 'kimi-k2-6',
-      messages: [
-        { role: 'system', content: systemPrompts[type] || systemPrompts.summary },
-        { role: 'user', content: `Lernstoff:\n\n${content.substring(0, 8000)}` },
-      ],
-      temperature: 0.7,
-      max_tokens: 2000,
-    }
-
-    console.log('[AI API] Sending request to Kimi...')
-
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
+  // Configs to try: Moonshot direct first, then OpenRouter fallback
+  const configs = []
+  
+  if (baseUrl) {
+    // Custom base URL set by user
+    configs.push({
+      baseUrl,
+      model: process.env.KIMI_MODEL || 'kimi-k2-6',
+      name: 'Custom',
     })
-
-    console.log('[AI API] Response status:', response.status)
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('[AI API] Error response:', errorText)
-      throw new Error(`Kimi API Error ${response.status}: ${errorText}`)
-    }
-
-    const data = await response.json()
-    const aiText = data.choices?.[0]?.message?.content || 'Keine Antwort erhalten.'
-
-    console.log('[AI API] Success! Response length:', aiText.length)
-
-    return { success: true, result: aiText }
-
-  } catch (err: any) {
-    console.error('[AI API] Exception:', err.message)
-    throw createError({ statusCode: 502, statusMessage: err.message || 'API request failed' })
+  } else {
+    // Try Moonshot direct first
+    configs.push({
+      baseUrl: 'https://api.moonshot.cn/v1',
+      model: 'kimi-k2-6',
+      name: 'Moonshot',
+    })
+    // Then OpenRouter fallback
+    configs.push({
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'moonshot/kimi-k2-6',
+      name: 'OpenRouter',
+    })
   }
+
+  const requestBody = {
+    model: '',
+    messages: [
+      { role: 'system', content: systemPrompts[type] || systemPrompts.summary },
+      { role: 'user', content: `Lernstoff:\n\n${content.substring(0, 8000)}` },
+    ],
+    temperature: 0.7,
+    max_tokens: 2000,
+  }
+
+  let lastError = ''
+
+  for (const config of configs) {
+    try {
+      console.log(`[AI API] Trying ${config.name} at ${config.baseUrl} with model ${config.model}...`)
+
+      const response = await fetch(`${config.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          ...(config.name === 'OpenRouter' ? { 'HTTP-Referer': 'https://studyflow.app', 'X-Title': 'StudyFlow' } : {}),
+        },
+        body: JSON.stringify({ ...requestBody, model: config.model }),
+      })
+
+      console.log(`[AI API] ${config.name} response status:`, response.status)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`[AI API] ${config.name} error:`, errorText)
+        lastError = `${config.name}: ${errorText}`
+        continue // Try next config
+      }
+
+      const data = await response.json()
+      const aiText = data.choices?.[0]?.message?.content || 'Keine Antwort erhalten.'
+
+      console.log(`[AI API] Success via ${config.name}! Response length:`, aiText.length)
+
+      return { success: true, result: aiText, provider: config.name }
+
+    } catch (err: any) {
+      console.error(`[AI API] ${config.name} exception:`, err.message)
+      lastError = `${config.name}: ${err.message}`
+      continue
+    }
+  }
+
+  // All configs failed
+  console.error('[AI API] All providers failed. Last error:', lastError)
+  throw createError({
+    statusCode: 502,
+    statusMessage: `Kimi API Error: ${lastError}. Dein Key funktioniert weder bei Moonshot (api.moonshot.cn) noch bei OpenRouter. Prüfe: 1) Ist der Key gültig? 2) Kommt er von der richtigen Plattform? 3) Setze KIMI_BASE_URL in Vercel wenn du einen anderen Provider nutzt.`,
+  })
 })
