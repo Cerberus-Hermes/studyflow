@@ -318,49 +318,14 @@
     </div>
 
     <!-- ========================= -->
+    <!-- FEEDBACK TAB -->
+    <!-- ========================= -->
+    <FeedbackPanel v-else-if="activeTab === 'feedback'" />
+
+    <!-- ========================= -->
     <!-- EINSTELLUNGEN TAB -->
     <!-- ========================= -->
-    <div v-else-if="activeTab === 'settings'" class="animate-fade-in space-y-8 max-w-2xl mx-auto">
-      <div class="sf-card p-8 text-center">
-        <div class="w-16 h-16 rounded-2xl sf-animated-gradient flex items-center justify-center text-white text-3xl mx-auto mb-4">⚙️</div>
-        <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">Einstellungen</h2>
-        <p class="text-sm" style="color: var(--text-muted);">Konfiguration und System-Informationen</p>
-      </div>
-      <div class="sf-card p-6 space-y-4">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(42, 157, 143, 0.15);">🔐</div>
-          <div>
-            <h3 class="text-lg font-bold" style="color: var(--text-primary);">KI-Konfiguration</h3>
-            <p class="text-xs" style="color: var(--text-muted);">Serverseitige API-Verwaltung</p>
-          </div>
-        </div>
-        <div class="p-4 rounded-xl space-y-2" style="background: var(--bg-tertiary);">
-          <div class="flex items-center gap-2 text-sm">
-            <span class="text-xl">🛡️</span>
-            <span style="color: var(--text-secondary);">Der Kimi API Key wird <strong style="color: var(--accent-cool);">serverseitig</strong> verwaltet</span>
-          </div>
-          <p class="text-xs pl-8" style="color: var(--text-muted);">Der Key liegt nie im Browser. Er wird über die Umgebungsvariable <code class="px-1 py-0.5 rounded text-xs" style="background: var(--bg-primary); color: var(--accent-warm);">KIMI_API_KEY</code> auf dem Server konfiguriert.</p>
-        </div>
-        <div class="p-4 rounded-xl" style="background: rgba(155, 93, 229, 0.1); border: 1px solid rgba(155, 93, 229, 0.2);">
-          <p class="text-sm font-semibold mb-2" style="color: var(--accent-purple);">📚 Für Entwickler / Deployment</p>
-          <div class="space-y-1 text-xs" style="color: var(--text-muted);">
-            <p><strong style="color: var(--text-secondary);">Vercel:</strong> Settings → Environment Variables → <code>KIMI_API_KEY=sk-...</code></p>
-            <p><strong style="color: var(--text-secondary);">Lokal:</strong> <code>.env</code> Datei mit <code>KIMI_API_KEY=sk-...</code></p>
-            <p><strong style="color: var(--text-secondary);">Optional:</strong> <code>KIMI_BASE_URL=https://api.moonshot.ai/v1</code> (international) oder <code>.cn</code> (China)</p>
-          </div>
-        </div>
-      </div>
-      <div class="sf-card p-6 space-y-4" style="border: 1px solid rgba(224, 122, 95, 0.3);">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(224, 122, 95, 0.15);">⚠️</div>
-          <div>
-            <h3 class="text-lg font-bold" style="color: var(--text-primary);">Daten zurücksetzen</h3>
-            <p class="text-xs" style="color: var(--text-muted);">Vorsicht — löscht alle deine Daten</p>
-          </div>
-        </div>
-        <button @click="resetAllData" class="sf-btn w-full text-sm" style="background: rgba(224, 122, 95, 0.15); color: var(--accent-warm); border: 1px solid rgba(224, 122, 95, 0.3);">🗑️ Alle Daten löschen</button>
-      </div>
-    </div>
+    <SettingsPanel v-else-if="activeTab === 'settings'" @reset-data="resetAllData" />
 
     <!-- Modal -->
     <Teleport to="body">

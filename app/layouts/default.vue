@@ -10,8 +10,8 @@
     <!-- Header -->
     <header class="relative z-10 sf-glass sticky top-0" style="border-bottom: 1px solid var(--border-subtle);">
       <div class="max-w-7xl mx-auto px-6 py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3 shrink-0">
             <div class="w-10 h-10 rounded-xl sf-animated-gradient flex items-center justify-center text-white text-lg shadow-lg">
               📚
             </div>
@@ -21,35 +21,53 @@
             </div>
           </div>
 
-          <div class="flex items-center gap-3">
-            <!-- Tab Navigation -->
-            <nav class="hidden sm:flex items-center gap-1 p-1 rounded-2xl" style="background: var(--bg-tertiary);">
+          <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <nav class="hidden lg:flex items-center gap-1 p-1 rounded-2xl overflow-x-auto max-w-[50vw]" style="background: var(--bg-tertiary);">
               <button
-                v-for="tab in tabs"
+                v-for="tab in visibleTabs"
                 :key="tab.id"
-                @click="activeTab = tab.id"
-                class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300"
-                :class="activeTab === tab.id
-                  ? 'text-white shadow-lg'
-                  : 'hover:text-white/80'"
+                class="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap shrink-0"
+                :class="activeTab === tab.id ? 'text-white shadow-lg' : 'hover:text-white/80'"
                 :style="activeTab === tab.id
                   ? { background: 'linear-gradient(135deg, var(--accent-warm), var(--accent-warm-light))' }
                   : { color: 'var(--text-secondary)' }"
+                @click="setTab(tab.id)"
               >
                 {{ tab.icon }} {{ tab.label }}
               </button>
             </nav>
 
-            <!-- Mobile Tab Select -->
-            <select v-model="activeTab" class="sf-input sf-select sm:hidden w-40 text-sm py-2 px-3">
-              <option v-for="tab in tabs" :key="tab.id" :value="tab.id">{{ tab.icon }} {{ tab.label }}</option>
+            <select
+              :value="activeTab"
+              class="sf-input sf-select lg:hidden w-36 text-sm py-2 px-3 shrink-0"
+              @change="setTab(($event.target).value)"
+            >
+              <option v-for="tab in visibleTabs" :key="tab.id" :value="tab.id">{{ tab.icon }} {{ tab.label }}</option>
             </select>
 
-            <!-- Dark Mode Toggle -->
+            <!-- Auth -->
+            <div v-if="auth.initialized" class="flex items-center gap-2 shrink-0">
+              <template v-if="auth.isLoggedIn">
+                <span class="hidden sm:inline text-xs font-medium px-2 py-1 rounded-lg max-w-[100px] truncate" style="background: var(--bg-tertiary); color: var(--text-secondary);">
+                  {{ auth.user?.username }}
+                </span>
+                <button
+                  class="text-xs px-3 py-2 rounded-xl transition-all hover:scale-105"
+                  style="background: var(--bg-tertiary); color: var(--text-muted);"
+                  @click="handleLogout"
+                >
+                  Abmelden
+                </button>
+              </template>
+              <NuxtLink v-else to="/login" class="sf-btn sf-btn-primary text-xs py-2 px-3 whitespace-nowrap">
+                Anmelden
+              </NuxtLink>
+            </div>
+
             <button
-              @click="store.toggleDarkMode()"
-              class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105"
+              class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 shrink-0"
               style="background: var(--bg-tertiary); color: var(--text-secondary);"
+              @click="store.toggleDarkMode()"
             >
               <span class="text-lg">{{ store.darkMode ? '☀️' : '🌙' }}</span>
             </button>
@@ -58,12 +76,10 @@
       </div>
     </header>
 
-    <!-- Main Content -->
     <main class="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
       <slot />
     </main>
 
-    <!-- Footer -->
     <footer class="relative z-10 py-6 mt-auto" style="border-top: 1px solid var(--border-subtle);">
       <div class="max-w-7xl mx-auto px-4 text-center text-xs" style="color: var(--text-muted);">
         <p>StudyFlow &copy; 2026 — Crafted with precision</p>
@@ -74,15 +90,46 @@
 
 <script setup>
 const store = useStudyFlowStore()
+const auth = useAuthStore()
+const route = useRoute()
+const router = useRouter()
+
 const activeTab = useState('activeTab', () => 'orga')
 
-const tabs = [
-  { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-  { id: 'orga', label: 'Organisation', icon: '📋' },
-  { id: 'calendar', label: 'Kalender', icon: '📅' },
-  { id: 'ai', label: 'KI Tools', icon: '🤖' },
-  { id: 'settings', label: 'Einstellungen', icon: '⚙️' },
+const allTabs = [
+  { id: 'dashboard', label: 'Dashboard', icon: '📊', public: true },
+  { id: 'orga', label: 'Organisation', icon: '📋', public: true },
+  { id: 'calendar', label: 'Kalender', icon: '📅', public: true },
+  { id: 'ai', label: 'KI Tools', icon: '🤖', public: true },
+  { id: 'feedback', label: 'Feedback', icon: '💬', public: true },
+  { id: 'settings', label: 'Einstellungen', icon: '⚙️', public: true },
 ]
+
+const visibleTabs = computed(() => allTabs)
+
+function setTab(id) {
+  activeTab.value = id
+  if (route.path === '/') {
+    router.replace({ query: { ...route.query, tab: id } })
+  }
+}
+
+async function handleLogout() {
+  await auth.logout()
+  if (activeTab.value === 'settings') {
+    activeTab.value = 'orga'
+  }
+}
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (typeof tab === 'string' && allTabs.some(t => t.id === tab)) {
+      activeTab.value = tab
+    }
+  },
+  { immediate: true },
+)
 
 provide('activeTab', activeTab)
 </script>
