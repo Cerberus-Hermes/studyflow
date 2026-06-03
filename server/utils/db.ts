@@ -30,7 +30,7 @@ interface Database {
   feedback: FeedbackEntry[]
 }
 
-const DATA_DIR = join(process.cwd(), '.data')
+const DATA_DIR = join(process.env.VERCEL ? '/tmp' : process.cwd(), '.data')
 const DB_PATH = join(DATA_DIR, 'db.json')
 
 const emptyDb = (): Database => ({ users: [], feedback: [] })
