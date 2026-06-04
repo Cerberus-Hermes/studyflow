@@ -195,6 +195,11 @@
     letter-spacing: 0.01em;
   }
 
+  .sf-dashboard-card {
+    padding: 20px;
+    animation: slideInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
   .sf-stat-card {
     position: relative;
     overflow: hidden;

@@ -13,40 +13,52 @@
         </div>
       </div>
 
-      <!-- Streak + Progress Cards -->
+      <!-- Stats Row -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <!-- Streak -->
-        <div class="sf-card p-6 text-center" style="animation: slideInUp 0.5s ease 0.05s forwards; opacity: 0;">
-          <div class="text-4xl mb-3">🔥</div>
-          <p class="text-3xl font-bold mb-1" style="color: var(--accent-warm);">{{ store.streak.current }}</p>
-          <p class="text-xs" style="color: var(--text-muted);">Tage in Folge</p>
-          <div v-if="store.streak.best > 0" class="mt-2 text-xs" style="color: var(--text-muted);">
-            Best: {{ store.streak.best }} 🏆
+        <div class="sf-card sf-dashboard-card" style="animation-delay: 0.05s;">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(224, 122, 95, 0.15);">🔥</div>
+            <div>
+              <p class="text-xs font-medium" style="color: var(--text-muted);">Streak</p>
+              <p class="text-2xl font-bold leading-tight" style="color: var(--accent-warm);">{{ store.streak.current }}</p>
+            </div>
           </div>
+          <div class="w-full h-1.5 rounded-full overflow-hidden mb-2" style="background: var(--bg-tertiary);">
+            <div class="h-full rounded-full" style="width: 100%; background: linear-gradient(90deg, var(--accent-warm), var(--accent-warm-light));"></div>
+          </div>
+          <p v-if="store.streak.best > 0" class="text-[11px]" style="color: var(--text-muted);">
+            Best: {{ store.streak.best }} 🏆
+          </p>
         </div>
 
         <!-- Weekly Progress -->
-        <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.1s forwards; opacity: 0;">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-sm font-semibold" style="color: var(--text-primary);">Wochenfortschritt</span>
-            <span class="text-xs font-bold" style="color: var(--accent-cool);">{{ weeklyProgress }}%</span>
+        <div class="sf-card sf-dashboard-card" style="animation-delay: 0.1s;">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(42, 157, 143, 0.15);">📈</div>
+            <div>
+              <p class="text-xs font-medium" style="color: var(--text-muted);">Wochenfortschritt</p>
+              <p class="text-2xl font-bold leading-tight" style="color: var(--accent-cool);">{{ weeklyProgress }}%</p>
+            </div>
           </div>
-          <div class="w-full h-3 rounded-full overflow-hidden" style="background: var(--border-subtle);">
-            <div class="h-full rounded-full transition-all duration-500 sf-animated-gradient" :style="{ width: weeklyProgress + '%' }"></div>
+          <div class="w-full h-1.5 rounded-full overflow-hidden mb-2" style="background: var(--bg-tertiary);">
+            <div class="h-full rounded-full transition-all duration-500" :style="{ width: weeklyProgress + '%', background: 'linear-gradient(90deg, var(--accent-cool), var(--accent-cool-light))' }"></div>
           </div>
-          <p class="text-xs mt-2" style="color: var(--text-muted);">
+          <p class="text-[11px]" style="color: var(--text-muted);">
             {{ store.doneTasks.length + store.doneGoals.length + store.doneDeadlines.length }} / {{ store.tasks.length + store.goals.length + store.deadlines.length }} erledigt
           </p>
         </div>
 
         <!-- Today's Focus -->
-        <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.15s forwards; opacity: 0;">
-          <div class="text-sm font-semibold mb-3" style="color: var(--text-primary);">🎯 Heutiger Fokus</div>
-          <div class="space-y-2">
-            <div class="flex items-center justify-between text-xs">
-              <span style="color: var(--text-muted);">Dringende Tasks</span>
-              <span class="font-bold" style="color: var(--accent-warm);">{{ urgentToday }}</span>
+        <div class="sf-card sf-dashboard-card" style="animation-delay: 0.15s;">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(155, 93, 229, 0.15);">🎯</div>
+            <div>
+              <p class="text-xs font-medium" style="color: var(--text-muted);">Heutiger Fokus</p>
+              <p class="text-2xl font-bold leading-tight" style="color: var(--accent-purple);">{{ urgentToday }}</p>
             </div>
+          </div>
+          <div class="space-y-2">
             <div class="flex items-center justify-between text-xs">
               <span style="color: var(--text-muted);">Deadlines diese Woche</span>
               <span class="font-bold" style="color: var(--accent-rose);">{{ deadlinesThisWeek }}</span>
@@ -68,7 +80,7 @@
       </div>
 
       <!-- Color-coded To-Do + Export -->
-      <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.3s forwards; opacity: 0;">
+      <div class="sf-card sf-dashboard-card p-6" style="animation-delay: 0.3s;">
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(224, 122, 95, 0.15);">📝</div>
@@ -115,17 +127,17 @@
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left relative overflow-hidden" style="animation: slideInUp 0.5s ease 0.05s forwards; opacity: 0;">
+        <button @click="openCompletedModal" class="sf-card sf-stat-card sf-dashboard-card group text-left relative overflow-hidden" style="animation-delay: 0.05s;">
           <div class="flex items-center justify-between mb-3"><div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style="background: rgba(224, 122, 95, 0.15);">📝</div><span class="text-xs font-medium px-2.5 py-1 rounded-full" style="background: rgba(224, 122, 95, 0.1); color: var(--accent-warm);">Tasks</span></div>
           <p class="text-4xl font-bold mb-1" style="color: var(--accent-warm);">{{ store.activeTasks.length }}</p>
           <p class="text-xs" style="color: var(--text-muted);">Offene Aufgaben</p>
         </button>
-        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left relative overflow-hidden" style="animation: slideInUp 0.5s ease 0.1s forwards; opacity: 0;">
+        <button @click="openCompletedModal" class="sf-card sf-stat-card sf-dashboard-card group text-left relative overflow-hidden" style="animation-delay: 0.1s;">
           <div class="flex items-center justify-between mb-3"><div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style="background: rgba(42, 157, 143, 0.15);">🎯</div><span class="text-xs font-medium px-2.5 py-1 rounded-full" style="background: rgba(42, 157, 143, 0.1); color: var(--accent-cool);">Ziele</span></div>
           <p class="text-4xl font-bold mb-1" style="color: var(--accent-cool);">{{ store.activeGoals.length }}</p>
           <p class="text-xs" style="color: var(--text-muted);">Offene Ziele</p>
         </button>
-        <button @click="openCompletedModal" class="sf-card sf-stat-card group text-left relative overflow-hidden" style="animation: slideInUp 0.5s ease 0.15s forwards; opacity: 0;">
+        <button @click="openCompletedModal" class="sf-card sf-stat-card sf-dashboard-card group text-left relative overflow-hidden" style="animation-delay: 0.15s;">
           <div class="flex items-center justify-between mb-3"><div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style="background: rgba(241, 91, 181, 0.15);">⏰</div><span class="text-xs font-medium px-2.5 py-1 rounded-full" style="background: rgba(241, 91, 181, 0.1); color: var(--accent-rose);">Deadlines</span></div>
           <p class="text-4xl font-bold mb-1" style="color: var(--accent-rose);">{{ store.activeDeadlines.length }}</p>
           <p class="text-xs" style="color: var(--text-muted);">Bald fällig</p>
@@ -134,7 +146,7 @@
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- To-Do -->
-        <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.2s forwards; opacity: 0;">
+        <div class="sf-card sf-dashboard-card p-6" style="animation-delay: 0.2s;">
           <div class="flex items-center gap-3 mb-5"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(224, 122, 95, 0.15);">📝</div><h3 class="text-lg font-bold" style="color: var(--text-primary);">Aufgaben</h3><span class="ml-auto text-xs font-bold px-3 py-1 rounded-full" style="background: rgba(224, 122, 95, 0.1); color: var(--accent-warm);">{{ store.activeTasks.length }}</span></div>
           <div class="space-y-3 mb-5">
             <input v-model="taskInput" @keyup.enter="handleAddTask" placeholder="Was steht an?" class="sf-input" />
@@ -153,7 +165,7 @@
         </div>
 
         <!-- Ziele -->
-        <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.25s forwards; opacity: 0;">
+        <div class="sf-card sf-dashboard-card p-6" style="animation-delay: 0.25s;">
           <div class="flex items-center gap-3 mb-5"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(42, 157, 143, 0.15);">🎯</div><h3 class="text-lg font-bold" style="color: var(--text-primary);">Ziele</h3><span class="ml-auto text-xs font-bold px-3 py-1 rounded-full" style="background: rgba(42, 157, 143, 0.1); color: var(--accent-cool);">{{ store.activeGoals.length }}</span></div>
           <div class="space-y-3 mb-5">
             <input v-model="goalInput" @keyup.enter="handleAddGoal" placeholder="Neues Ziel setzen..." class="sf-input" />
@@ -172,7 +184,7 @@
         </div>
 
         <!-- Lernplan -->
-        <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.3s forwards; opacity: 0;">
+        <div class="sf-card sf-dashboard-card p-6" style="animation-delay: 0.3s;">
           <div class="flex items-center gap-3 mb-5"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(155, 93, 229, 0.15);">🧠</div><h3 class="text-lg font-bold" style="color: var(--text-primary);">Lernplan</h3><span class="ml-auto text-xs font-bold px-3 py-1 rounded-full" style="background: rgba(155, 93, 229, 0.1); color: var(--accent-purple);">{{ store.upcomingStudyPlans.length }}</span></div>
           <div class="space-y-3 mb-5">
             <div class="flex gap-2">
@@ -191,7 +203,7 @@
         </div>
 
         <!-- Deadlines -->
-        <div class="sf-card p-6" style="animation: slideInUp 0.5s ease 0.35s forwards; opacity: 0;">
+        <div class="sf-card sf-dashboard-card p-6" style="animation-delay: 0.35s;">
           <div class="flex items-center gap-3 mb-5"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(241, 91, 181, 0.15);">⏰</div><h3 class="text-lg font-bold" style="color: var(--text-primary);">Deadlines</h3><span class="ml-auto text-xs font-bold px-3 py-1 rounded-full" style="background: rgba(241, 91, 181, 0.1); color: var(--accent-rose);">{{ store.activeDeadlines.length }}</span></div>
           <div class="space-y-3 mb-5">
             <input v-model="deadlineInput" @keyup.enter="handleAddDeadline" placeholder="Was ist fällig?" class="sf-input" />
@@ -479,3 +491,4 @@ const exportCSV = () => {
   URL.revokeObjectURL(url)
 }
 </script>
+
