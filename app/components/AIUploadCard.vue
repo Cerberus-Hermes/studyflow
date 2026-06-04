@@ -1,5 +1,5 @@
 <template>
-  <div class="sf-card p-6 group relative overflow-hidden" :style="`animation: slideInUp 0.5s ease forwards; animation-delay: ${delay}s; opacity: 0;`">
+  <div class="sf-card sf-dashboard-card p-6 group relative overflow-hidden" style="animation-delay: ${delay}s;">
     <div class="absolute top-0 left-0 right-0 h-1 sf-animated-gradient opacity-80"></div>
 
     <div class="relative z-10">
@@ -91,8 +91,11 @@
           <button @click="copyResult" class="sf-btn sf-btn-secondary flex-1 text-xs py-2.5">
             📋 Kopieren
           </button>
-          <button @click="downloadResult" class="sf-btn sf-btn-primary flex-1 text-xs py-2.5">
-            💾 Speichern
+          <button @click="exportPDF" class="sf-btn sf-btn-secondary flex-1 text-xs py-2.5">
+            📄 PDF
+          </button>
+          <button @click="exportWord" class="sf-btn sf-btn-primary flex-1 text-xs py-2.5">
+            📝 Word
           </button>
         </div>
       </div>
@@ -266,13 +269,56 @@ const copyResult = () => {
   alert('In die Zwischenablage kopiert! ✅')
 }
 
-const downloadResult = () => {
-  const text = resultContent.value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-  const blob = new Blob([text], { type: 'text/plain' })
+const exportPDF = () => {
+  const win = window.open('', '_blank')
+  if (!win) return
+  const plainText = resultContent.value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${props.title} – Ergebnis</title>
+      <style>
+        @page { size: A4; margin: 2cm; }
+        body { font-family: 'Inter', system-ui, sans-serif; color: #1a1a2e; line-height: 1.7; max-width: 700px; margin: 0 auto; padding: 40px; }
+        h1 { font-size: 24px; margin-bottom: 8px; color: #e07a5f; }
+        .meta { color: #8a8aa3; font-size: 12px; margin-bottom: 24px; }
+        .content { white-space: pre-wrap; font-size: 14px; }
+        strong { color: #1a1a2e; }
+        @media print { .no-print { display: none; } }
+      </style>
+    </head>
+    <body>
+      <button class="no-print" onclick="window.print()" style="position:fixed;top:20px;right:20px;padding:10px 20px;background:#e07a5f;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:600;box-shadow:0 4px 16px rgba(224,122,95,0.3);">🖨 Als PDF speichern</button>
+      <h1>${props.title}</h1>
+      <div class="meta">Erstellt am ${new Date().toLocaleDateString('de-DE')} mit StudyFlow KI</div>
+      <div class="content">${resultContent.value}</div>
+    </body>
+    </html>
+  `
+  win.document.write(html)
+  win.document.close()
+}
+
+const exportWord = () => {
+  const plainText = resultContent.value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  const html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8"><title>${props.title}</title></head>
+    <body>
+      <h1 style="color:#e07a5f;font-family:Arial,sans-serif;">${props.title}</h1>
+      <p style="color:#8a8aa3;font-size:12px;font-family:Arial,sans-serif;">Erstellt am ${new Date().toLocaleDateString('de-DE')} mit StudyFlow KI</p>
+      <hr style="border:none;border-top:1px solid #eee;margin:16px 0;">
+      <div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#1a1a2e;">${resultContent.value}</div>
+    </body>
+    </html>
+  `
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `${props.title.replace(/\s+/g, '_')}_Ergebnis.txt`
+  a.download = `${props.title.replace(/\s+/g, '_')}_Ergebnis.doc`
   a.click()
   URL.revokeObjectURL(url)
 }
