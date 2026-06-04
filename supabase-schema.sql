@@ -91,15 +91,24 @@ ALTER TABLE calendar_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE completed_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
 
--- Policies (service key bypasses RLS, but good practice for direct access)
-CREATE POLICY IF NOT EXISTS "Allow all" ON users FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Allow all" ON tasks FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Allow all" ON goals FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Allow all" ON study_plans FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Allow all" ON deadlines FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Allow all" ON calendar_entries FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Allow all" ON completed_items FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Allow all" ON feedback FOR ALL USING (true) WITH CHECK (true);
+-- Policies (drop first to avoid "already exists" errors)
+DROP POLICY IF EXISTS "users_allow_all" ON users;
+DROP POLICY IF EXISTS "tasks_allow_all" ON tasks;
+DROP POLICY IF EXISTS "goals_allow_all" ON goals;
+DROP POLICY IF EXISTS "study_plans_allow_all" ON study_plans;
+DROP POLICY IF EXISTS "deadlines_allow_all" ON deadlines;
+DROP POLICY IF EXISTS "calendar_entries_allow_all" ON calendar_entries;
+DROP POLICY IF EXISTS "completed_items_allow_all" ON completed_items;
+DROP POLICY IF EXISTS "feedback_allow_all" ON feedback;
+
+CREATE POLICY "users_allow_all" ON users FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "tasks_allow_all" ON tasks FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "goals_allow_all" ON goals FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "study_plans_allow_all" ON study_plans FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "deadlines_allow_all" ON deadlines FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "calendar_entries_allow_all" ON calendar_entries FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "completed_items_allow_all" ON completed_items FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "feedback_allow_all" ON feedback FOR ALL USING (true) WITH CHECK (true);
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
