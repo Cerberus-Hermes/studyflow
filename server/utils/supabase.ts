@@ -4,15 +4,9 @@ const url = process.env.SUPABASE_URL
 const key = process.env.SUPABASE_SERVICE_KEY
 
 if (!url || !key) {
-  console.warn('[Supabase] SUPABASE_URL or SUPABASE_SERVICE_KEY not set. Using local JSON fallback.')
+  throw new Error('SUPABASE_URL and SUPABASE_SERVICE_KEY are required')
 }
 
-export const supabase = url && key
-  ? createClient(url, key, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
-  : null
-
-export function isSupabaseEnabled() {
-  return !!supabase
-}
+export const supabase = createClient(url, key, {
+  auth: { autoRefreshToken: false, persistSession: false },
+})

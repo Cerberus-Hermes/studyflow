@@ -10,23 +10,20 @@ export interface PublicUser {
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<PublicUser | null>(null)
-  const adminUnlocked = ref(false)
   const loading = ref(false)
   const initialized = ref(false)
 
   const isLoggedIn = computed(() => !!user.value)
-  const isAdmin = computed(() => user.value?.role === 'admin' || adminUnlocked.value)
+  const isAdmin = computed(() => user.value?.role === 'admin')
   const canAccessSettings = computed(() => isAdmin.value)
 
   async function fetchMe() {
     loading.value = true
     try {
-      const data = await $fetch<{ user: PublicUser | null, adminUnlocked: boolean }>('/api/auth/me')
+      const data = await $fetch<{ user: PublicUser | null }>('/api/auth/me')
       user.value = data.user
-      adminUnlocked.value = data.adminUnlocked
     } catch {
       user.value = null
-      adminUnlocked.value = false
     } finally {
       loading.value = false
       initialized.value = true
@@ -39,7 +36,6 @@ export const useAuthStore = defineStore('auth', () => {
       body: { username, email, password },
     })
     user.value = data.user
-    adminUnlocked.value = data.user.role === 'admin'
     return data.user
   }
 
@@ -49,27 +45,16 @@ export const useAuthStore = defineStore('auth', () => {
       body: { username, password },
     })
     user.value = data.user
-    adminUnlocked.value = data.user.role === 'admin'
     return data.user
   }
 
   async function logout() {
     await $fetch('/api/auth/logout', { method: 'POST' })
     user.value = null
-    adminUnlocked.value = false
-  }
-
-  async function unlockAdmin(password: string) {
-    await $fetch('/api/auth/admin-unlock', {
-      method: 'POST',
-      body: { password },
-    })
-    adminUnlocked.value = true
   }
 
   return {
     user,
-    adminUnlocked,
     loading,
     initialized,
     isLoggedIn,
@@ -79,6 +64,5 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     login,
     logout,
-    unlockAdmin,
   }
 })

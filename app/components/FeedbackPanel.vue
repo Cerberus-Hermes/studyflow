@@ -98,7 +98,6 @@
 
 <script setup>
 const auth = useAuthStore()
-const GUEST_FEEDBACK_KEY = 'sf_guest_feedback'
 
 const userTypeOptions = [
   { value: 'student', label: 'Student / Schüler' },
@@ -126,32 +125,16 @@ const userTypeLabel = (type) => userTypeLabels[type] || type
 const formatDate = (iso) =>
   new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
-function loadGuestFeedback() {
-  if (!import.meta.client) return
+async function loadMyFeedback() {
+  if (!auth.isLoggedIn) {
+    myFeedback.value = []
+    return
+  }
   try {
-    myFeedback.value = JSON.parse(localStorage.getItem(GUEST_FEEDBACK_KEY) || '[]')
+    const data = await $fetch('/api/feedback')
+    myFeedback.value = data.feedback || []
   } catch {
     myFeedback.value = []
-  }
-}
-
-function saveGuestFeedback(entry) {
-  if (!import.meta.client) return
-  const list = [entry, ...myFeedback.value].slice(0, 30)
-  localStorage.setItem(GUEST_FEEDBACK_KEY, JSON.stringify(list))
-  myFeedback.value = list
-}
-
-async function loadMyFeedback() {
-  if (auth.isLoggedIn) {
-    try {
-      const data = await $fetch('/api/feedback')
-      myFeedback.value = data.feedback || []
-    } catch {
-      myFeedback.value = []
-    }
-  } else {
-    loadGuestFeedback()
   }
 }
 
@@ -161,7 +144,7 @@ async function submitFeedback() {
   submitError.value = ''
   submitSuccess.value = false
   try {
-    const data = await $fetch('/api/feedback', {
+    await $fetch('/api/feedback', {
       method: 'POST',
       body: {
         text: feedbackText.value.trim(),
@@ -176,8 +159,6 @@ async function submitFeedback() {
 
     if (auth.isLoggedIn) {
       await loadMyFeedback()
-    } else if (data.feedback) {
-      saveGuestFeedback(data.feedback)
     }
   } catch (e) {
     submitError.value = e?.data?.message || e?.message || 'Speichern fehlgeschlagen'

@@ -1,24 +1,16 @@
 <template>
   <div class="animate-fade-in space-y-8 max-w-2xl mx-auto">
-    <!-- Admin lock -->
-    <div v-if="!auth.canAccessSettings" class="sf-card p-8 space-y-4">
+    <!-- Nicht-Admin Hinweis -->
+    <div v-if="!auth.isAdmin" class="sf-card p-8 space-y-4">
       <div class="text-center">
         <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4" style="background: rgba(155, 93, 229, 0.15);">🔒</div>
         <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">Admin-Bereich</h2>
-        <p class="text-sm" style="color: var(--text-muted);">Einstellungen sind geschützt. Melde dich an und gib das Admin-Passwort ein.</p>
+        <p class="text-sm" style="color: var(--text-muted);">Einstellungen sind nur für Administratoren verfügbar.</p>
       </div>
 
       <div v-if="!auth.isLoggedIn" class="text-center">
         <NuxtLink to="/login?redirect=/?tab=settings" class="sf-btn sf-btn-primary text-sm">Zuerst anmelden</NuxtLink>
       </div>
-
-      <form v-else class="space-y-3 max-w-sm mx-auto" @submit.prevent="unlock">
-        <input v-model="adminPassword" type="password" class="sf-input w-full" placeholder="Admin-Passwort" required />
-        <p v-if="unlockError" class="text-xs text-center" style="color: var(--accent-warm);">{{ unlockError }}</p>
-        <button type="submit" class="sf-btn sf-btn-primary w-full text-sm" :disabled="unlocking">
-          {{ unlocking ? 'Prüfe…' : 'Entsperren' }}
-        </button>
-      </form>
     </div>
 
     <template v-else>
@@ -47,7 +39,6 @@
           <p class="text-sm font-semibold mb-2" style="color: var(--accent-purple);">Auth (Server)</p>
           <div class="space-y-1 text-xs" style="color: var(--text-muted);">
             <p><code>AUTH_SECRET</code> — Session-Signatur (min. 16 Zeichen)</p>
-            <p><code>ADMIN_PASSWORD</code> — Passwort für Einstellungen & Admin-Login</p>
           </div>
         </div>
       </div>
@@ -88,8 +79,8 @@
         <div class="flex items-center gap-3 mb-2">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(224, 122, 95, 0.15);">⚠️</div>
           <div>
-            <h3 class="text-lg font-bold" style="color: var(--text-primary);">Lokale App-Daten</h3>
-            <p class="text-xs" style="color: var(--text-muted);">Tasks, Ziele, Kalender (nur dieser Browser)</p>
+            <h3 class="text-lg font-bold" style="color: var(--text-primary);">Account-Daten</h3>
+            <p class="text-xs" style="color: var(--text-muted);">Alle deine Daten werden in Supabase gespeichert</p>
           </div>
         </div>
         <button
@@ -97,7 +88,7 @@
           style="background: rgba(224, 122, 95, 0.15); color: var(--accent-warm); border: 1px solid rgba(224, 122, 95, 0.3);"
           @click="$emit('reset-data')"
         >
-          🗑️ Alle lokalen Daten löschen
+          🗑️ Alle Account-Daten löschen
         </button>
       </div>
     </template>
@@ -108,9 +99,6 @@
 defineEmits(['reset-data'])
 
 const auth = useAuthStore()
-const adminPassword = ref('')
-const unlockError = ref('')
-const unlocking = ref(false)
 const allFeedback = ref([])
 const loadingFeedback = ref(false)
 
@@ -125,20 +113,6 @@ const userTypeLabel = (type) => userTypeLabels[type] || type || '—'
 const formatDate = (iso) =>
   new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
-async function unlock() {
-  unlocking.value = true
-  unlockError.value = ''
-  try {
-    await auth.unlockAdmin(adminPassword.value)
-    adminPassword.value = ''
-    await loadAllFeedback()
-  } catch (e) {
-    unlockError.value = e?.data?.message || e?.message || 'Entsperren fehlgeschlagen'
-  } finally {
-    unlocking.value = false
-  }
-}
-
 async function loadAllFeedback() {
   loadingFeedback.value = true
   try {
@@ -151,7 +125,7 @@ async function loadAllFeedback() {
   }
 }
 
-watch(() => auth.canAccessSettings, (can) => {
-  if (can) loadAllFeedback()
-}, { immediate: true })
+onMounted(() => {
+  if (auth.isAdmin) loadAllFeedback()
+})
 </script>

@@ -71,6 +71,8 @@ const submit = async () => {
     } else {
       await auth.register(username.value.trim(), email.value.trim(), password.value)
     }
+    const store = useStudyFlowStore()
+    await store.loadAllData()
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     await router.push(redirect)
   } catch (e) {

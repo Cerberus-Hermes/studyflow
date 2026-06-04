@@ -364,15 +364,19 @@ const dragOverDay = ref(null)
 
 const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
-const resetAllData = () => {
+const resetAllData = async () => {
   if (confirm('Wirklich ALLE Daten löschen? Das kann nicht rückgängig gemacht werden!')) {
-    store.tasks = []
-    store.goals = []
-    store.studyPlans = []
-    store.deadlines = []
-    store.calendarEntries = []
-    store.completedItems = []
-    store.saveToStorage?.()
+    try {
+      await $fetch('/api/data', { method: 'DELETE' })
+      store.tasks = []
+      store.goals = []
+      store.studyPlans = []
+      store.deadlines = []
+      store.calendarEntries = []
+      store.completedItems = []
+    } catch (e) {
+      alert('Fehler beim Löschen: ' + (e?.data?.message || e?.message))
+    }
   }
 }
 

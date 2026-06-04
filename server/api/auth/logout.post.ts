@@ -1,7 +1,6 @@
-import { clearAdminUnlockCookie, clearSessionCookie } from '../../utils/auth'
+import { clearSessionCookie } from '../../utils/auth'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   clearSessionCookie(event)
-  clearAdminUnlockCookie(event)
   return { success: true }
 })
