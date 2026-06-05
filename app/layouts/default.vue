@@ -100,6 +100,8 @@ const allTabs = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊', public: true },
   { id: 'orga', label: 'Organisation', icon: '📋', public: true },
   { id: 'calendar', label: 'Kalender', icon: '📅', public: true },
+  { id: 'universities', label: 'Hochschulen', icon: '🏛️', public: false },
+  { id: 'my-courses', label: 'Meine Kurse', icon: '📚', public: false },
   { id: 'ai', label: 'KI Tools', icon: '🤖', public: false },
   { id: 'feedback', label: 'Feedback', icon: '💬', public: true },
   { id: 'settings', label: 'Einstellungen', icon: '⚙️', public: true },

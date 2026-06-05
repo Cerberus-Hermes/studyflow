@@ -310,6 +310,16 @@
     </div>
 
     <!-- ========================= -->
+    <!-- UNIVERSITIES TAB -->
+    <!-- ========================= -->
+    <UniversityManager v-else-if="activeTab === 'universities'" />
+
+    <!-- ========================= -->
+    <!-- MY COURSES TAB -->
+    <!-- ========================= -->
+    <CourseStudentView v-else-if="activeTab === 'my-courses'" />
+
+    <!-- ========================= -->
     <!-- KI TAB -->
     <!-- ========================= -->
     <div v-else-if="activeTab === 'ai'" class="animate-fade-in space-y-8">

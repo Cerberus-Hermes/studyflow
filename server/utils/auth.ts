@@ -117,6 +117,22 @@ export async function requireAdmin(event: H3Event): Promise<SessionPayload> {
   return session
 }
 
+export async function requireTeacher(event: H3Event): Promise<SessionPayload> {
+  const session = await requireAuth(event)
+  if (session.role !== 'teacher' && session.role !== 'admin') {
+    throw createError({ statusCode: 403, statusMessage: 'Lehrpersonal-Zugriff erforderlich' })
+  }
+  return session
+}
+
+export async function requireAdminOrTeacher(event: H3Event): Promise<SessionPayload> {
+  const session = await requireAuth(event)
+  if (session.role !== 'admin' && session.role !== 'teacher') {
+    throw createError({ statusCode: 403, statusMessage: 'Admin- oder Lehrpersonal-Zugriff erforderlich' })
+  }
+  return session
+}
+
 export function toPublicUser(user: User) {
   return {
     id: user.id,

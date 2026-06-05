@@ -715,3 +715,504 @@ export function getAICreditsRemaining(user: User): number {
   if (user.subscriptionTier === 'premium') return -1 // unlimited
   return Math.max(0, user.aiCreditsLimit - user.aiCreditsUsed)
 }
+
+// ========== UNIVERSITY SYSTEM ==========
+
+export interface University {
+  id: string
+  name: string
+  slug: string
+  description: string
+  createdBy: string
+  createdAt: string
+}
+
+export interface UniversityMember {
+  id: string
+  universityId: string
+  userId: string | null
+  role: 'teacher' | 'student'
+  invitedBy: string
+  invitedAt: string
+  status: 'pending' | 'accepted'
+  inviteEmail: string | null
+}
+
+export interface Course {
+  id: string
+  universityId: string
+  name: string
+  description: string
+  createdBy: string
+  createdAt: string
+}
+
+export interface CourseEnrollment {
+  id: string
+  courseId: string
+  userId: string
+  enrolledBy: string
+  enrolledAt: string
+}
+
+export interface CourseFile {
+  id: string
+  courseId: string
+  name: string
+  storagePath: string
+  mimeType: string
+  sizeBytes: number
+  uploadedBy: string
+  uploadedAt: string
+}
+
+export interface CourseMaterial {
+  id: string
+  courseId: string
+  fileId: string | null
+  type: 'quiz' | 'flashcards' | 'summary' | 'practice_exam' | 'study_guide'
+  title: string
+  content: string
+  generatedBy: string
+  createdAt: string
+}
+
+function toDbUniversity(row: any): University {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description || '',
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+  }
+}
+
+function fromDbUniversity(u: University): any {
+  return {
+    id: u.id,
+    name: u.name,
+    slug: u.slug,
+    description: u.description,
+    created_by: u.createdBy,
+    created_at: u.createdAt,
+  }
+}
+
+function toDbUniversityMember(row: any): UniversityMember {
+  return {
+    id: row.id,
+    universityId: row.university_id,
+    userId: row.user_id,
+    role: row.role,
+    invitedBy: row.invited_by,
+    invitedAt: row.invited_at,
+    status: row.status,
+    inviteEmail: row.invite_email,
+  }
+}
+
+function fromDbUniversityMember(m: UniversityMember): any {
+  return {
+    id: m.id,
+    university_id: m.universityId,
+    user_id: m.userId,
+    role: m.role,
+    invited_by: m.invitedBy,
+    invited_at: m.invitedAt,
+    status: m.status,
+    invite_email: m.inviteEmail,
+  }
+}
+
+function toDbCourse(row: any): Course {
+  return {
+    id: row.id,
+    universityId: row.university_id,
+    name: row.name,
+    description: row.description || '',
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+  }
+}
+
+function fromDbCourse(c: Course): any {
+  return {
+    id: c.id,
+    university_id: c.universityId,
+    name: c.name,
+    description: c.description,
+    created_by: c.createdBy,
+    created_at: c.createdAt,
+  }
+}
+
+function toDbCourseEnrollment(row: any): CourseEnrollment {
+  return {
+    id: row.id,
+    courseId: row.course_id,
+    userId: row.user_id,
+    enrolledBy: row.enrolled_by,
+    enrolledAt: row.enrolled_at,
+  }
+}
+
+function fromDbCourseEnrollment(e: CourseEnrollment): any {
+  return {
+    id: e.id,
+    course_id: e.courseId,
+    user_id: e.userId,
+    enrolled_by: e.enrolledBy,
+    enrolled_at: e.enrolledAt,
+  }
+}
+
+function toDbCourseFile(row: any): CourseFile {
+  return {
+    id: row.id,
+    courseId: row.course_id,
+    name: row.name,
+    storagePath: row.storage_path,
+    mimeType: row.mime_type,
+    sizeBytes: row.size_bytes,
+    uploadedBy: row.uploaded_by,
+    uploadedAt: row.uploaded_at,
+  }
+}
+
+function fromDbCourseFile(f: CourseFile): any {
+  return {
+    id: f.id,
+    course_id: f.courseId,
+    name: f.name,
+    storage_path: f.storagePath,
+    mime_type: f.mimeType,
+    size_bytes: f.sizeBytes,
+    uploaded_by: f.uploadedBy,
+    uploaded_at: f.uploadedAt,
+  }
+}
+
+function toDbCourseMaterial(row: any): CourseMaterial {
+  return {
+    id: row.id,
+    courseId: row.course_id,
+    fileId: row.file_id,
+    type: row.type,
+    title: row.title,
+    content: row.content,
+    generatedBy: row.generated_by,
+    createdAt: row.created_at,
+  }
+}
+
+function fromDbCourseMaterial(m: CourseMaterial): any {
+  return {
+    id: m.id,
+    course_id: m.courseId,
+    file_id: m.fileId,
+    type: m.type,
+    title: m.title,
+    content: m.content,
+    generated_by: m.generatedBy,
+    created_at: m.createdAt,
+  }
+}
+
+// --- University CRUD ---
+
+export async function createUniversity(name: string, slug: string, description: string, createdBy: string): Promise<University> {
+  const entry: University = {
+    id: crypto.randomUUID(),
+    name,
+    slug,
+    description,
+    createdBy,
+    createdAt: new Date().toISOString(),
+  }
+  const { error } = await supabase!.from('universities').insert(fromDbUniversity(entry))
+  if (error) throw new Error(error.message)
+  return entry
+}
+
+export async function findUniversityBySlug(slug: string): Promise<University | undefined> {
+  const { data, error } = await supabase!
+    .from('universities')
+    .select('*')
+    .eq('slug', slug)
+    .single()
+  if (error || !data) return undefined
+  return toDbUniversity(data)
+}
+
+export async function findUniversityById(id: string): Promise<University | undefined> {
+  const { data, error } = await supabase!
+    .from('universities')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (error || !data) return undefined
+  return toDbUniversity(data)
+}
+
+export async function listUniversitiesByAdmin(userId: string): Promise<University[]> {
+  const { data, error } = await supabase!
+    .from('universities')
+    .select('*')
+    .eq('created_by', userId)
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map(toDbUniversity)
+}
+
+export async function listMyUniversities(userId: string): Promise<(University & { memberRole: string; memberStatus: string })[]> {
+  // Universities where user is a member
+  const { data, error } = await supabase!
+    .from('university_members')
+    .select('university_id, role, status, universities(*)')
+    .eq('user_id', userId)
+    .eq('status', 'accepted')
+  if (error) throw new Error(error.message)
+  return (data || []).map((row: any) => ({
+    ...toDbUniversity(row.universities),
+    memberRole: row.role,
+    memberStatus: row.status,
+  }))
+}
+
+export async function deleteUniversity(id: string): Promise<void> {
+  const { error } = await supabase!.from('universities').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+// --- University Member CRUD ---
+
+export async function inviteToUniversity(universityId: string, userId: string | null, inviteEmail: string | null, role: 'teacher' | 'student', invitedBy: string): Promise<UniversityMember> {
+  const entry: UniversityMember = {
+    id: crypto.randomUUID(),
+    universityId,
+    userId,
+    role,
+    invitedBy,
+    invitedAt: new Date().toISOString(),
+    status: 'pending',
+    inviteEmail,
+  }
+  const { error } = await supabase!.from('university_members').insert(fromDbUniversityMember(entry))
+  if (error) throw new Error(error.message)
+  return entry
+}
+
+export async function acceptUniversityInvite(memberId: string): Promise<void> {
+  const { error } = await supabase!
+    .from('university_members')
+    .update({ status: 'accepted' })
+    .eq('id', memberId)
+  if (error) throw new Error(error.message)
+}
+
+export async function listUniversityMembers(universityId: string): Promise<UniversityMember[]> {
+  const { data, error } = await supabase!
+    .from('university_members')
+    .select('*')
+    .eq('university_id', universityId)
+    .order('invited_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map(toDbUniversityMember)
+}
+
+export async function findUniversityMember(universityId: string, userId: string): Promise<UniversityMember | undefined> {
+  const { data, error } = await supabase!
+    .from('university_members')
+    .select('*')
+    .eq('university_id', universityId)
+    .eq('user_id', userId)
+    .single()
+  if (error || !data) return undefined
+  return toDbUniversityMember(data)
+}
+
+export async function removeUniversityMember(memberId: string): Promise<void> {
+  const { error } = await supabase!.from('university_members').delete().eq('id', memberId)
+  if (error) throw new Error(error.message)
+}
+
+// --- Course CRUD ---
+
+export async function createCourse(universityId: string, name: string, description: string, createdBy: string): Promise<Course> {
+  const entry: Course = {
+    id: crypto.randomUUID(),
+    universityId,
+    name,
+    description,
+    createdBy,
+    createdAt: new Date().toISOString(),
+  }
+  const { error } = await supabase!.from('courses').insert(fromDbCourse(entry))
+  if (error) throw new Error(error.message)
+  return entry
+}
+
+export async function findCourseById(id: string): Promise<Course | undefined> {
+  const { data, error } = await supabase!
+    .from('courses')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (error || !data) return undefined
+  return toDbCourse(data)
+}
+
+export async function listCoursesByUniversity(universityId: string): Promise<Course[]> {
+  const { data, error } = await supabase!
+    .from('courses')
+    .select('*')
+    .eq('university_id', universityId)
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map(toDbCourse)
+}
+
+export async function listMyCourses(userId: string): Promise<(Course & { university_name: string })[]> {
+  const { data, error } = await supabase!
+    .from('course_enrollments')
+    .select('courses(*, universities(name))')
+    .eq('user_id', userId)
+  if (error) throw new Error(error.message)
+  return (data || []).map((row: any) => ({
+    ...toDbCourse(row.courses),
+    university_name: row.courses?.universities?.name || '',
+  }))
+}
+
+export async function deleteCourse(id: string): Promise<void> {
+  const { error } = await supabase!.from('courses').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+// --- Course Enrollment CRUD ---
+
+export async function enrollStudent(courseId: string, userId: string, enrolledBy: string): Promise<CourseEnrollment> {
+  const entry: CourseEnrollment = {
+    id: crypto.randomUUID(),
+    courseId,
+    userId,
+    enrolledBy,
+    enrolledAt: new Date().toISOString(),
+  }
+  const { error } = await supabase!.from('course_enrollments').insert(fromDbCourseEnrollment(entry))
+  if (error) throw new Error(error.message)
+  return entry
+}
+
+export async function listCourseEnrollments(courseId: string): Promise<CourseEnrollment[]> {
+  const { data, error } = await supabase!
+    .from('course_enrollments')
+    .select('*')
+    .eq('course_id', courseId)
+    .order('enrolled_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map(toDbCourseEnrollment)
+}
+
+export async function findCourseEnrollment(courseId: string, userId: string): Promise<CourseEnrollment | undefined> {
+  const { data, error } = await supabase!
+    .from('course_enrollments')
+    .select('*')
+    .eq('course_id', courseId)
+    .eq('user_id', userId)
+    .single()
+  if (error || !data) return undefined
+  return toDbCourseEnrollment(data)
+}
+
+export async function unenrollStudent(enrollmentId: string): Promise<void> {
+  const { error } = await supabase!.from('course_enrollments').delete().eq('id', enrollmentId)
+  if (error) throw new Error(error.message)
+}
+
+// --- Course File CRUD ---
+
+export async function createCourseFile(courseId: string, name: string, storagePath: string, mimeType: string, sizeBytes: number, uploadedBy: string): Promise<CourseFile> {
+  const entry: CourseFile = {
+    id: crypto.randomUUID(),
+    courseId,
+    name,
+    storagePath,
+    mimeType,
+    sizeBytes,
+    uploadedBy,
+    uploadedAt: new Date().toISOString(),
+  }
+  const { error } = await supabase!.from('course_files').insert(fromDbCourseFile(entry))
+  if (error) throw new Error(error.message)
+  return entry
+}
+
+export async function listCourseFiles(courseId: string): Promise<CourseFile[]> {
+  const { data, error } = await supabase!
+    .from('course_files')
+    .select('*')
+    .eq('course_id', courseId)
+    .order('uploaded_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map(toDbCourseFile)
+}
+
+export async function findCourseFileById(id: string): Promise<CourseFile | undefined> {
+  const { data, error } = await supabase!
+    .from('course_files')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (error || !data) return undefined
+  return toDbCourseFile(data)
+}
+
+export async function deleteCourseFile(id: string): Promise<void> {
+  const { error } = await supabase!.from('course_files').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+// --- Course Material CRUD ---
+
+export async function createCourseMaterial(courseId: string, fileId: string | null, type: CourseMaterial['type'], title: string, content: string, generatedBy: string): Promise<CourseMaterial> {
+  const entry: CourseMaterial = {
+    id: crypto.randomUUID(),
+    courseId,
+    fileId,
+    type,
+    title,
+    content,
+    generatedBy,
+    createdAt: new Date().toISOString(),
+  }
+  const { error } = await supabase!.from('course_materials').insert(fromDbCourseMaterial(entry))
+  if (error) throw new Error(error.message)
+  return entry
+}
+
+export async function listCourseMaterials(courseId: string): Promise<CourseMaterial[]> {
+  const { data, error } = await supabase!
+    .from('course_materials')
+    .select('*')
+    .eq('course_id', courseId)
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map(toDbCourseMaterial)
+}
+
+export async function findCourseMaterialById(id: string): Promise<CourseMaterial | undefined> {
+  const { data, error } = await supabase!
+    .from('course_materials')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (error || !data) return undefined
+  return toDbCourseMaterial(data)
+}
+
+export async function deleteCourseMaterial(id: string): Promise<void> {
+  const { error } = await supabase!.from('course_materials').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
