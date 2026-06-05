@@ -90,6 +90,9 @@
         <!-- Interactive Quiz Game -->
         <QuizGame v-if="quizData && quizData.length > 0" :questions="quizData" @reset="reset" />
 
+        <!-- Interactive Flashcard Game -->
+        <FlashcardGame v-else-if="flashcardData && flashcardData.length > 0" :cards="flashcardData" @reset="reset" />
+
         <!-- Fallback: raw AI output for non-quiz or failed parse -->
         <template v-else>
           <div class="p-3 rounded-xl text-sm leading-relaxed max-h-80 overflow-y-auto" style="background: var(--bg-primary); color: var(--text-secondary);">
@@ -138,6 +141,7 @@ const uploadStep = ref('upload')
 const progress = ref(0)
 const resultContent = ref('')
 const quizData = ref(null)
+const flashcardData = ref(null)
 const manualText = ref('')
 const showTextInput = ref(false)
 const showUnsupportedWarning = ref(false)
@@ -257,6 +261,8 @@ const startProcessing = async ({ mode, content, file, label }) => {
       hasResult.value = true
       if (props.resultTemplate === 'quiz') {
         quizData.value = parseQuiz(data.result)
+      } else if (props.resultTemplate === 'flashcards') {
+        flashcardData.value = parseFlashcards(data.result)
       }
       resultContent.value = formatAIResponse(data.result)
     }, 500)
@@ -267,6 +273,7 @@ const startProcessing = async ({ mode, content, file, label }) => {
       isUploading.value = false
       hasResult.value = true
       quizData.value = null
+      flashcardData.value = null
       resultContent.value = `<strong style="color: var(--accent-rose);">⚠️ Fehler:</strong><br>${err.message}`
     }, 500)
   }
@@ -323,6 +330,48 @@ const parseQuiz = (text) => {
   return questions.length > 0 ? questions : null
 }
 
+const parseFlashcards = (text) => {
+  // Try to extract JSON from response
+  const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/)
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0])
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].question && parsed[0].answer) {
+        return parsed.map(c => ({
+          question: c.question,
+          answer: c.answer,
+        }))
+      }
+    } catch {
+      // fallback to text parsing
+    }
+  }
+
+  // Fallback text parser for non-JSON responses
+  const cards = []
+  const blocks = text.split(/(?:Karte\s*\d+[:.)]?|\n\d+[:.)]\s|#{1,3}\s)/i).filter(Boolean)
+  for (const block of blocks) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean)
+    if (lines.length < 2) continue
+    const qMatch = lines.find(l => l.match(/^Frage[:)]?\s*/i))
+    const aMatch = lines.find(l => l.match(/^Antwort[:)]?\s*/i))
+    if (qMatch && aMatch) {
+      cards.push({
+        question: qMatch.replace(/^Frage[:)]?\s*/i, ''),
+        answer: aMatch.replace(/^Antwort[:)]?\s*/i, ''),
+      })
+    } else if (lines.length >= 2) {
+      // Try first line = question, second = answer
+      cards.push({
+        question: lines[0].replace(/^\d+[:.)]?\s*/, ''),
+        answer: lines[1].replace(/^\d+[:.)]?\s*/, ''),
+      })
+    }
+  }
+
+  return cards.length > 0 ? cards : null
+}
+
 const reset = () => {
   hasResult.value = false
   isUploading.value = false
@@ -332,6 +381,7 @@ const reset = () => {
   showUnsupportedWarning.value = false
   unsupportedFileName.value = ''
   quizData.value = null
+  flashcardData.value = null
 }
 
 const copyResult = () => {
