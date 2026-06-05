@@ -286,27 +286,94 @@ const formatAIResponse = (text) => {
     .replace(/\n/g, '<br>')
 }
 
+const parseFlashcards = (text) => {
+  if (!text || typeof text !== 'string') return null
+
+  // 1. Try to extract from markdown code block first
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+  if (codeBlockMatch) {
+    try {
+      const parsed = JSON.parse(codeBlockMatch[1].trim())
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].question && parsed[0].answer) {
+        return parsed.map(c => ({ question: String(c.question), answer: String(c.answer) }))
+      }
+    } catch { /* ignore */ }
+  }
+
+  // 2. Try raw JSON array anywhere in text
+  const jsonMatch = text.match(/\[\s*\{[\s\S]*?\}\s*\]/)
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0])
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].question && parsed[0].answer) {
+        return parsed.map(c => ({ question: String(c.question), answer: String(c.answer) }))
+      }
+    } catch { /* ignore */ }
+  }
+
+  // 3. Fallback: try to parse line by line
+  const cards = []
+  // Remove markdown code blocks for text parsing
+  const cleanText = text.replace(/```[\s\S]*?```/g, '').trim()
+  const blocks = cleanText.split(/(?:Karte\s*\d+[:.)]?|\n\d+[:.)]\s|#{1,3}\s)/i).filter(Boolean)
+  for (const block of blocks) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean)
+    if (lines.length < 2) continue
+    const qMatch = lines.find(l => l.match(/^Frage[:)]?\s*/i))
+    const aMatch = lines.find(l => l.match(/^Antwort[:)]?\s*/i))
+    if (qMatch && aMatch) {
+      cards.push({
+        question: qMatch.replace(/^Frage[:)]?\s*/i, ''),
+        answer: aMatch.replace(/^Antwort[:)]?\s*/i, ''),
+      })
+    } else if (lines.length >= 2) {
+      cards.push({
+        question: lines[0].replace(/^\d+[:.)]?\s*/, ''),
+        answer: lines[1].replace(/^\d+[:.)]?\s*/, ''),
+      })
+    }
+  }
+
+  return cards.length > 0 ? cards : null
+}
+
 const parseQuiz = (text) => {
-  // Try to extract JSON from response (handles markdown code blocks too)
-  const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/)
+  if (!text || typeof text !== 'string') return null
+
+  // 1. Try markdown code block first
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+  if (codeBlockMatch) {
+    try {
+      const parsed = JSON.parse(codeBlockMatch[1].trim())
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].question && Array.isArray(parsed[0].options) && typeof parsed[0].correct === 'number') {
+        return parsed.map(q => ({
+          question: String(q.question),
+          options: q.options.slice(0, 4).map(String),
+          correct: Math.max(0, Math.min(3, q.correct)),
+        }))
+      }
+    } catch { /* ignore */ }
+  }
+
+  // 2. Try raw JSON array
+  const jsonMatch = text.match(/\[\s*\{[\s\S]*?\}\s*\]/)
   if (jsonMatch) {
     try {
       const parsed = JSON.parse(jsonMatch[0])
       if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].question && Array.isArray(parsed[0].options) && typeof parsed[0].correct === 'number') {
         return parsed.map(q => ({
-          question: q.question,
-          options: q.options.slice(0, 4),
+          question: String(q.question),
+          options: q.options.slice(0, 4).map(String),
           correct: Math.max(0, Math.min(3, q.correct)),
         }))
       }
-    } catch {
-      // fallback to text parsing
-    }
+    } catch { /* ignore */ }
   }
 
-  // Fallback text parser for non-JSON responses
+  // 3. Fallback text parser
   const questions = []
-  const blocks = text.split(/(?:Frage\s*\d+[:.)]?|\n\d+[:.)]\s)/i).filter(Boolean)
+  const cleanText = text.replace(/```[\s\S]*?```/g, '').trim()
+  const blocks = cleanText.split(/(?:Frage\s*\d+[:.)]?|\n\d+[:.)]\s)/i).filter(Boolean)
   for (const block of blocks) {
     const lines = block.split('\n').map(l => l.trim()).filter(Boolean)
     if (lines.length < 2) continue
@@ -328,48 +395,6 @@ const parseQuiz = (text) => {
   }
 
   return questions.length > 0 ? questions : null
-}
-
-const parseFlashcards = (text) => {
-  // Try to extract JSON from response
-  const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/)
-  if (jsonMatch) {
-    try {
-      const parsed = JSON.parse(jsonMatch[0])
-      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].question && parsed[0].answer) {
-        return parsed.map(c => ({
-          question: c.question,
-          answer: c.answer,
-        }))
-      }
-    } catch {
-      // fallback to text parsing
-    }
-  }
-
-  // Fallback text parser for non-JSON responses
-  const cards = []
-  const blocks = text.split(/(?:Karte\s*\d+[:.)]?|\n\d+[:.)]\s|#{1,3}\s)/i).filter(Boolean)
-  for (const block of blocks) {
-    const lines = block.split('\n').map(l => l.trim()).filter(Boolean)
-    if (lines.length < 2) continue
-    const qMatch = lines.find(l => l.match(/^Frage[:)]?\s*/i))
-    const aMatch = lines.find(l => l.match(/^Antwort[:)]?\s*/i))
-    if (qMatch && aMatch) {
-      cards.push({
-        question: qMatch.replace(/^Frage[:)]?\s*/i, ''),
-        answer: aMatch.replace(/^Antwort[:)]?\s*/i, ''),
-      })
-    } else if (lines.length >= 2) {
-      // Try first line = question, second = answer
-      cards.push({
-        question: lines[0].replace(/^\d+[:.)]?\s*/, ''),
-        answer: lines[1].replace(/^\d+[:.)]?\s*/, ''),
-      })
-    }
-  }
-
-  return cards.length > 0 ? cards : null
 }
 
 const reset = () => {
