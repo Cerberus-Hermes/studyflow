@@ -100,12 +100,15 @@ const allTabs = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊', public: true },
   { id: 'orga', label: 'Organisation', icon: '📋', public: true },
   { id: 'calendar', label: 'Kalender', icon: '📅', public: true },
-  { id: 'ai', label: 'KI Tools', icon: '🤖', public: true },
+  { id: 'ai', label: 'KI Tools', icon: '🤖', public: false },
   { id: 'feedback', label: 'Feedback', icon: '💬', public: true },
   { id: 'settings', label: 'Einstellungen', icon: '⚙️', public: true },
 ]
 
-const visibleTabs = computed(() => allTabs)
+const visibleTabs = computed(() => {
+  if (auth.isLoggedIn) return allTabs
+  return allTabs.filter(t => t.public)
+})
 
 function setTab(id) {
   activeTab.value = id

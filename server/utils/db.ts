@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 
+export type SubscriptionTier = 'free' | 'pro' | 'premium'
 export type UserRole = 'user' | 'admin'
 
 export interface User {
@@ -9,6 +10,10 @@ export interface User {
   passwordHash: string
   passwordSalt: string
   role: UserRole
+  subscriptionTier: SubscriptionTier
+  aiCreditsUsed: number
+  aiCreditsLimit: number
+  subscriptionExpiresAt: string | null
   createdAt: string
 }
 
@@ -86,6 +91,10 @@ function toDbUser(row: any): User {
     passwordHash: row.password_hash,
     passwordSalt: row.password_salt,
     role: row.role,
+    subscriptionTier: row.subscription_tier || 'free',
+    aiCreditsUsed: row.ai_credits_used || 0,
+    aiCreditsLimit: row.ai_credits_limit || 10,
+    subscriptionExpiresAt: row.subscription_expires_at || null,
     createdAt: row.created_at,
   }
 }
@@ -98,6 +107,10 @@ function fromDbUser(u: User): any {
     password_hash: u.passwordHash,
     password_salt: u.passwordSalt,
     role: u.role,
+    subscription_tier: u.subscriptionTier,
+    ai_credits_used: u.aiCreditsUsed,
+    ai_credits_limit: u.aiCreditsLimit,
+    subscription_expires_at: u.subscriptionExpiresAt,
     created_at: u.createdAt,
   }
 }
@@ -279,6 +292,10 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt'> & { role?:
     ...user,
     id: crypto.randomUUID(),
     role: user.role || 'user',
+    subscriptionTier: user.subscriptionTier || 'free',
+    aiCreditsUsed: user.aiCreditsUsed || 0,
+    aiCreditsLimit: user.aiCreditsLimit || 10,
+    subscriptionExpiresAt: user.subscriptionExpiresAt || null,
     createdAt: new Date().toISOString(),
   }
   const { error } = await supabase!.from('users').insert(fromDbUser(entry))
@@ -605,4 +622,96 @@ export async function listFeedbackByUser(userId: string): Promise<FeedbackEntry[
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
   return (data || []).map(toDbFeedback)
+}
+
+// ========== AI USAGE / SUBSCRIPTION FUNCTIONS ==========
+
+export interface AIUsageEntry {
+  id: string
+  userId: string
+  toolType: string
+  createdAt: string
+}
+
+function toDbAIUsage(row: any): AIUsageEntry {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    toolType: row.tool_type,
+    createdAt: row.created_at,
+  }
+}
+
+export async function trackAIUsage(userId: string, toolType: string): Promise<AIUsageEntry> {
+  const entry: AIUsageEntry = {
+    id: crypto.randomUUID(),
+    userId,
+    toolType,
+    createdAt: new Date().toISOString(),
+  }
+  const { error } = await supabase!.from('ai_usage').insert({
+    id: entry.id,
+    user_id: entry.userId,
+    tool_type: entry.toolType,
+    created_at: entry.createdAt,
+  })
+  if (error) throw new Error(error.message)
+
+  // Increment user's credit count
+  await supabase!
+    .from('users')
+    .update({ ai_credits_used: supabase!.rpc('increment', { x: 1 }) })
+    .eq('id', userId)
+
+  return entry
+}
+
+export async function getAIUsageCount(userId: string, since?: string): Promise<number> {
+  const query = supabase!
+    .from('ai_usage')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  if (since) {
+    query.gte('created_at', since)
+  }
+
+  const { count, error } = await query
+  if (error) throw new Error(error.message)
+  return count || 0
+}
+
+export async function incrementAICredits(userId: string): Promise<void> {
+  const { data, error: fetchErr } = await supabase!
+    .from('users')
+    .select('ai_credits_used')
+    .eq('id', userId)
+    .single()
+
+  if (fetchErr) throw new Error(fetchErr.message)
+
+  const current = (data?.ai_credits_used || 0) + 1
+  const { error } = await supabase!
+    .from('users')
+    .update({ ai_credits_used: current })
+    .eq('id', userId)
+
+  if (error) throw new Error(error.message)
+}
+
+export function hasAICredits(user: User): boolean {
+  // Premium = unlimited
+  if (user.subscriptionTier === 'premium') return true
+
+  // Check if subscription expired
+  if (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) < new Date()) {
+    return false
+  }
+
+  return user.aiCreditsUsed < user.aiCreditsLimit
+}
+
+export function getAICreditsRemaining(user: User): number {
+  if (user.subscriptionTier === 'premium') return -1 // unlimited
+  return Math.max(0, user.aiCreditsLimit - user.aiCreditsUsed)
 }

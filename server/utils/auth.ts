@@ -123,6 +123,10 @@ export function toPublicUser(user: User) {
     username: user.username,
     email: user.email,
     role: user.role,
+    subscriptionTier: user.subscriptionTier,
+    aiCreditsUsed: user.aiCreditsUsed,
+    aiCreditsLimit: user.aiCreditsLimit,
+    subscriptionExpiresAt: user.subscriptionExpiresAt,
     createdAt: user.createdAt,
   }
 }

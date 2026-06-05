@@ -5,6 +5,10 @@ export interface PublicUser {
   username: string
   email: string
   role: 'user' | 'admin'
+  subscriptionTier: 'free' | 'pro' | 'premium'
+  aiCreditsUsed: number
+  aiCreditsLimit: number
+  subscriptionExpiresAt: string | null
   createdAt: string
 }
 
@@ -16,6 +20,24 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = computed(() => !!user.value)
   const isAdmin = computed(() => user.value?.role === 'admin')
   const canAccessSettings = computed(() => isAdmin.value)
+
+  // Subscription computed properties
+  const subscriptionTier = computed(() => user.value?.subscriptionTier || 'free')
+  const aiCreditsRemaining = computed(() => {
+    if (!user.value) return 0
+    if (user.value.subscriptionTier === 'premium') return -1 // unlimited
+    return Math.max(0, user.value.aiCreditsLimit - user.value.aiCreditsUsed)
+  })
+  const hasAICredits = computed(() => {
+    if (!user.value) return false
+    if (user.value.subscriptionTier === 'premium') return true
+    return user.value.aiCreditsUsed < user.value.aiCreditsLimit
+  })
+  const canUseAI = computed(() => isLoggedIn.value && hasAICredits.value)
+  const subscriptionExpired = computed(() => {
+    if (!user.value?.subscriptionExpiresAt) return false
+    return new Date(user.value.subscriptionExpiresAt) < new Date()
+  })
 
   async function fetchMe() {
     loading.value = true
@@ -60,6 +82,11 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggedIn,
     isAdmin,
     canAccessSettings,
+    subscriptionTier,
+    aiCreditsRemaining,
+    hasAICredits,
+    canUseAI,
+    subscriptionExpired,
     fetchMe,
     register,
     login,

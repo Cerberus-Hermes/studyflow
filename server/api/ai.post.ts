@@ -5,6 +5,8 @@ import {
   extractPdfText,
   getKimiConfigs,
 } from '../utils/kimi'
+import { requireAuth } from '../utils/auth'
+import { findUserById, hasAICredits, incrementAICredits } from '../utils/db'
 
 const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 const IMAGE_EXT = /\.(jpe?g|png|webp|gif)$/i
@@ -29,12 +31,25 @@ function isPdf(mime: string, filename: string) {
 }
 
 export default defineEventHandler(async (event) => {
+  // 1. Auth required
+  const session = await requireAuth(event)
+
+  // 2. Load user & check credits
+  const user = await findUserById(session.userId)
+  if (!user) {
+    throw createError({ statusCode: 401, statusMessage: 'Benutzer nicht gefunden' })
+  }
+  if (!hasAICredits(user)) {
+    throw createError({ statusCode: 403, statusMessage: 'KI-Credits aufgebraucht. Bitte Abo upgraden.' })
+  }
+
   const apiKey = process.env.KIMI_API_KEY
   if (!apiKey) {
     throw createError({ statusCode: 500, statusMessage: 'KIMI_API_KEY not configured on server' })
   }
 
   const contentType = getHeader(event, 'content-type') || ''
+  let taskType = 'summary'
 
   if (contentType.includes('multipart/form-data')) {
     const parts = await readMultipartFormData(event)
@@ -44,7 +59,7 @@ export default defineEventHandler(async (event) => {
 
     const filePart = parts.find(p => p.name === 'file')
     const typePart = parts.find(p => p.name === 'type')
-    const taskType = typePart?.data?.toString() || 'summary'
+    taskType = typePart?.data?.toString() || 'summary'
 
     if (!filePart?.data?.length) {
       throw createError({ statusCode: 400, statusMessage: 'Keine Datei empfangen' })
@@ -80,18 +95,25 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Consume credit before calling AI
+    await incrementAICredits(session.userId)
+
     const { result, provider } = await callKimiChat(configs, messages, apiKey)
     return { success: true, result, provider }
   }
 
   const body = await readBody(event)
   const { content, type } = body
+  taskType = type || 'summary'
 
   if (!content?.trim()) {
     throw createError({ statusCode: 400, statusMessage: 'Content required' })
   }
 
-  const messages = buildMessages(type || 'summary', { textContent: content })
+  // Consume credit before calling AI
+  await incrementAICredits(session.userId)
+
+  const messages = buildMessages(taskType, { textContent: content })
   const { result, provider } = await callKimiChat(getKimiConfigs(), messages, apiKey)
   return { success: true, result, provider }
 })

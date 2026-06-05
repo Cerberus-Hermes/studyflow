@@ -313,20 +313,68 @@
     <!-- KI TAB -->
     <!-- ========================= -->
     <div v-else-if="activeTab === 'ai'" class="animate-fade-in space-y-8">
-      <div class="sf-card p-8 text-center relative overflow-hidden" style="animation: slideInUp 0.5s ease forwards;">
-        <div class="absolute inset-0 opacity-5"><div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full sf-animated-gradient blur-3xl"></div></div>
+      <!-- Login required banner -->
+      <div v-if="!auth.isLoggedIn" class="sf-card p-10 text-center relative overflow-hidden" style="animation: slideInUp 0.5s ease forwards;">
+        <div class="absolute inset-0 opacity-5">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full sf-animated-gradient blur-3xl"></div>
+        </div>
         <div class="relative z-10">
-          <div class="w-20 h-20 rounded-3xl sf-animated-gradient flex items-center justify-center text-white text-4xl mx-auto mb-4 shadow-2xl">🤖</div>
-          <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">KI Lernoptimierung</h2>
-          <p class="text-sm max-w-lg mx-auto" style="color: var(--text-muted);">Lade PDFs, Fotos von Folien oder Text hoch — die KI erstellt sofort Ergebnisse.</p>
+          <div class="w-20 h-20 rounded-3xl sf-animated-gradient flex items-center justify-center text-white text-4xl mx-auto mb-4 shadow-2xl">🔒</div>
+          <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">KI Tools</h2>
+          <p class="text-sm max-w-md mx-auto mb-6" style="color: var(--text-muted);">Melde dich an, um die KI-gestützten Lern-Tools zu nutzen. Kostenlos mit 10 Credits/Monat.</p>
+          <NuxtLink to="/login" class="sf-btn sf-btn-primary px-8 py-3 text-sm font-semibold inline-block">
+            Jetzt anmelden →
+          </NuxtLink>
         </div>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <AIUploadCard icon="📄" title="KI Zusammenfassung" desc="Lade Vorlesungsfolien hoch und erhalte automatisch Zusammenfassungen." result-template="summary" demo="• Wichtigste Definitionen zusammengefasst&lt;br&gt;• Kernaussagen strukturiert&lt;br&gt;• Prüfungsrelevante Themen markiert" :delay="0.1" />
-        <AIUploadCard icon="🃏" title="KI Karteikarten" desc="Erstelle automatisch Lernkarten aus deinem Material." result-template="flashcards" demo="&lt;strong&gt;Frage:&lt;/strong&gt; Was ist Polymorphie?&lt;br&gt;&lt;strong&gt;Antwort:&lt;/strong&gt; Objekte können unterschiedliche Formen annehmen." :delay="0.15" />
-        <AIUploadCard icon="📝" title="KI Aufgabenerstellung" desc="Generiere passende Übungsaufgaben zu deinem Stoff." result-template="tasks" demo="Erstelle eine Klasse &quot;Student&quot; mit Konstruktor, Getter und Setter Methoden." :delay="0.2" />
-        <AIUploadCard icon="❓" title="KI Quiz" desc="Erstelle Multiple-Choice-Quizze aus deinen Folien." result-template="quiz" demo="Welche Aussage beschreibt Vererbung in Java?&lt;br&gt;⭕ Eine Klasse kann Eigenschaften anderer Klassen übernehmen" :delay="0.25" />
+
+      <!-- Credits exhausted banner -->
+      <div v-else-if="!auth.canUseAI" class="sf-card p-10 text-center relative overflow-hidden" style="animation: slideInUp 0.5s ease forwards;">
+        <div class="absolute inset-0 opacity-5">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full sf-animated-gradient blur-3xl"></div>
+        </div>
+        <div class="relative z-10">
+          <div class="w-20 h-20 rounded-3xl flex items-center justify-center text-white text-4xl mx-auto mb-4 shadow-2xl" style="background: var(--accent-rose);">⚠️</div>
+          <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">Credits aufgebraucht</h2>
+          <p class="text-sm max-w-md mx-auto mb-6" style="color: var(--text-muted);">Du hast alle deinen KI-Credits für diesen Monat verbraucht. Upgrade dein Abo für unbegrenzte Nutzung.</p>
+          <div class="flex gap-3 justify-center">
+            <button class="sf-btn sf-btn-secondary px-6 py-3 text-sm font-semibold" @click="activeTab = 'orga'">
+              Zurück
+            </button>
+            <button class="sf-btn sf-btn-primary px-6 py-3 text-sm font-semibold" style="background: linear-gradient(135deg, #f4a261, #e07a5f);">
+              ⭐ Upgrade
+            </button>
+          </div>
+        </div>
       </div>
+
+      <!-- AI Tools content -->
+      <template v-else>
+        <!-- Header with credit badge -->
+        <div class="sf-card p-8 text-center relative overflow-hidden" style="animation: slideInUp 0.5s ease forwards;">
+          <div class="absolute inset-0 opacity-5"><div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full sf-animated-gradient blur-3xl"></div></div>
+          <div class="relative z-10">
+            <div class="w-20 h-20 rounded-3xl sf-animated-gradient flex items-center justify-center text-white text-4xl mx-auto mb-4 shadow-2xl">🤖</div>
+            <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">KI Lernoptimierung</h2>
+            <p class="text-sm max-w-lg mx-auto mb-4" style="color: var(--text-muted);">Lade PDFs, Fotos von Folien oder Text hoch — die KI erstellt sofort Ergebnisse.</p>
+            <!-- Credit badge -->
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold" :style="creditBadgeStyle">
+              <span v-if="auth.subscriptionTier === 'premium'">∞</span>
+              <span v-else>{{ auth.aiCreditsRemaining }}</span>
+              <span>{{ creditBadgeText }}</span>
+              <span v-if="auth.subscriptionTier !== 'premium'" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide" style="background: var(--accent-warm); color: #fff;">
+                {{ auth.subscriptionTier }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <AIUploadCard icon="📄" title="KI Zusammenfassung" desc="Lade Vorlesungsfolien hoch und erhalte automatisch Zusammenfassungen." result-template="summary" demo="• Wichtigste Definitionen zusammengefasst&lt;br&gt;• Kernaussagen strukturiert&lt;br&gt;• Prüfungsrelevante Themen markiert" :delay="0.1" />
+          <AIUploadCard icon="🃏" title="KI Karteikarten" desc="Erstelle automatisch Lernkarten aus deinem Material." result-template="flashcards" demo="&lt;strong&gt;Frage:&lt;/strong&gt; Was ist Polymorphie?&lt;br&gt;&lt;strong&gt;Antwort:&lt;/strong&gt; Objekte können unterschiedliche Formen annehmen." :delay="0.15" />
+          <AIUploadCard icon="📝" title="KI Aufgabenerstellung" desc="Generiere passende Übungsaufgaben zu deinem Stoff." result-template="tasks" demo="Erstelle eine Klasse &quot;Student&quot; mit Konstruktor, Getter und Setter Methoden." :delay="0.2" />
+          <AIUploadCard icon="❓" title="KI Quiz" desc="Erstelle Multiple-Choice-Quizze aus deinen Folien." result-template="quiz" demo="Welche Aussage beschreibt Vererbung in Java?&lt;br&gt;⭕ Eine Klasse kann Eigenschaften anderer Klassen übernehmen" :delay="0.25" />
+        </div>
+      </template>
     </div>
 
     <!-- ========================= -->
@@ -357,6 +405,7 @@
 
 <script setup>
 const store = useStudyFlowStore()
+const auth = useAuthStore()
 const activeTab = inject('activeTab')
 
 const taskInput = ref('')
@@ -369,6 +418,22 @@ const deadlineInput = ref('')
 const deadlineDate = ref('')
 const showModal = ref(false)
 const calendarMode = ref('week')
+
+// Credit badge computed
+const creditBadgeStyle = computed(() => {
+  if (auth.subscriptionTier === 'premium') {
+    return { background: 'rgba(212, 175, 55, 0.15)', color: '#d4af37', border: '1px solid rgba(212, 175, 55, 0.3)' }
+  }
+  if (auth.aiCreditsRemaining <= 2) {
+    return { background: 'rgba(224, 122, 95, 0.12)', color: '#e07a5f', border: '1px solid rgba(224, 122, 95, 0.3)' }
+  }
+  return { background: 'var(--bg-tertiary)', color: 'var(--text-secondary)', border: '1px solid var(--border-medium)' }
+})
+
+const creditBadgeText = computed(() => {
+  if (auth.subscriptionTier === 'premium') return 'Unbegrenzt'
+  return 'Credits übrig'
+})
 
 // Drag & Drop
 const draggedEntry = ref(null)

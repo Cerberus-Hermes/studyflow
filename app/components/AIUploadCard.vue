@@ -7,9 +7,13 @@
         <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" style="background: var(--bg-tertiary);">
           {{ icon }}
         </div>
-        <div>
+        <div class="flex-1 min-w-0">
           <h3 class="text-lg font-bold" style="color: var(--text-primary);">{{ title }}</h3>
           <p class="text-xs" style="color: var(--text-muted);">{{ desc }}</p>
+        </div>
+        <!-- Credit cost indicator -->
+        <div class="shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide" style="background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-subtle);">
+          1 Credit
         </div>
       </div>
 
@@ -230,12 +234,23 @@ const startProcessing = async ({ mode, content, file, label }) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || errorData.statusMessage || `Server Error ${response.status}`)
+      const msg = errorData.message || errorData.statusMessage || `Server Error ${response.status}`
+      if (response.status === 401) {
+        throw new Error('Bitte melde dich an, um die KI-Tools zu nutzen.')
+      }
+      if (response.status === 403) {
+        throw new Error(msg + ' Upgrade dein Abo für mehr Credits.')
+      }
+      throw new Error(msg)
     }
 
     const data = await response.json()
     clearInterval(progressInterval)
     progress.value = 100
+
+    // Refresh auth to update credit count
+    const auth = useAuthStore()
+    await auth.fetchMe()
 
     setTimeout(() => {
       isUploading.value = false
