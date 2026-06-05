@@ -52,7 +52,8 @@
               <div v-for="file in courseFiles" :key="file.id" class="flex items-center justify-between p-3 rounded-xl" style="background: var(--bg-tertiary);">
                 <div class="flex items-center gap-2 min-w-0">
                   <span class="text-lg">📄</span>
-                  <p class="text-sm font-medium truncate" style="color: var(--text-primary);">{{ file.name }}</p>
+                  <a v-if="isUrl(file.storage_path)" :href="file.storage_path" target="_blank" class="text-sm font-medium truncate hover:underline" style="color: var(--accent-cool);">{{ file.name }}</a>
+                  <p v-else class="text-sm font-medium truncate" style="color: var(--text-primary);">{{ file.name }}</p>
                 </div>
                 <span class="text-[10px] shrink-0" style="color: var(--text-muted);">{{ formatFileSize(file.size_bytes) }}</span>
               </div>
@@ -173,6 +174,10 @@ function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
+function isUrl(str) {
+  return typeof str === 'string' && (str.startsWith('http://') || str.startsWith('https://'))
 }
 
 function materialEmoji(type) {
