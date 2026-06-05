@@ -932,6 +932,20 @@ export async function createUniversity(name: string, slug: string, description: 
   }
   const { error } = await supabase!.from('universities').insert(fromDbUniversity(entry))
   if (error) throw new Error(error.message)
+
+  // Auto-add creator as accepted teacher member
+  const memberEntry: UniversityMember = {
+    id: crypto.randomUUID(),
+    universityId: entry.id,
+    userId: createdBy,
+    role: 'teacher',
+    invitedBy: createdBy,
+    invitedAt: new Date().toISOString(),
+    status: 'accepted',
+    inviteEmail: null,
+  }
+  await supabase!.from('university_members').insert(fromDbUniversityMember(memberEntry))
+
   return entry
 }
 
@@ -966,18 +980,41 @@ export async function listUniversitiesByAdmin(userId: string): Promise<Universit
 }
 
 export async function listMyUniversities(userId: string): Promise<(University & { memberRole: string; memberStatus: string })[]> {
-  // Universities where user is a member
-  const { data, error } = await supabase!
+  // 1. Universities where user is an accepted member
+  const { data: memberData, error: memberError } = await supabase!
     .from('university_members')
     .select('university_id, role, status, universities(*)')
     .eq('user_id', userId)
     .eq('status', 'accepted')
-  if (error) throw new Error(error.message)
-  return (data || []).map((row: any) => ({
+
+  if (memberError) throw new Error(memberError.message)
+
+  const fromMembers = (memberData || []).map((row: any) => ({
     ...toDbUniversity(row.universities),
     memberRole: row.role,
     memberStatus: row.status,
   }))
+
+  // 2. Also include universities where user is the creator (for backwards compat)
+  const { data: createdData, error: createdError } = await supabase!
+    .from('universities')
+    .select('*')
+    .eq('created_by', userId)
+
+  if (createdError) throw new Error(createdError.message)
+
+  const fromCreated = (createdData || []).map((row: any) => ({
+    ...toDbUniversity(row),
+    memberRole: 'teacher',
+    memberStatus: 'accepted',
+  }))
+
+  // Merge and deduplicate by id
+  const map = new Map<string, University & { memberRole: string; memberStatus: string }>()
+  for (const u of fromMembers) map.set(u.id, u)
+  for (const u of fromCreated) if (!map.has(u.id)) map.set(u.id, u)
+
+  return Array.from(map.values())
 }
 
 export async function deleteUniversity(id: string): Promise<void> {
