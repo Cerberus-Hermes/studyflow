@@ -4,7 +4,7 @@ export const SYSTEM_PROMPTS: Record<string, string> = {
   summary: 'Du bist ein Lernassistent. Fasse den folgenden Lernstoff zusammen. Strukturiere die Ausgabe mit: 1) Kernaussagen (3-5 Bullet Points), 2) Wichtige Definitionen, 3) Prüfungsrelevante Themen. Antworte auf Deutsch.',
   flashcards: 'Du bist ein Lernassistent. Erstelle aus dem folgenden Lernstoff 5 Lernkarten im Format Frage/Antwort. Gib sie als nummerierte Liste aus. Antworte auf Deutsch.',
   tasks: 'Du bist ein Lernassistent. Erstelle aus dem folgenden Lernstoff 3 Übungsaufgaben (eine leicht, eine mittel, eine schwer). Gib für jede Aufgabe eine mögliche Lösung. Antworte auf Deutsch.',
-  quiz: 'Du bist ein Lernassistent. Erstelle aus dem folgenden Lernstoff ein Multiple-Choice-Quiz mit 5 Fragen. Jede Frage hat 4 Antwortmöglichkeiten, markiere die richtige. Antworte auf Deutsch.',
+  quiz: 'Du bist ein Lernassistent. Erstelle aus dem folgenden Lernstoff ein Multiple-Choice-Quiz mit 5 Fragen. Jede Frage hat genau 4 Antwortmöglichkeiten. Antworte AUSSCHLIESSLICH als gültiges JSON-Array im folgenden Format (keine Markdown-Codeblöcke, keine Erklärungen davor oder danach): [{"question":"...","options":["...","...","...","..."],"correct":0}] wobei "correct" der Index (0-3) der richtigen Antwort ist. Antworte auf Deutsch.',
 }
 
 export type KimiConfig = {

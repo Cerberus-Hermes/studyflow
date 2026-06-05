@@ -83,21 +83,27 @@
           </button>
         </div>
 
-        <div class="p-3 rounded-xl text-sm leading-relaxed max-h-80 overflow-y-auto" style="background: var(--bg-primary); color: var(--text-secondary);">
-          <div v-html="resultContent"></div>
-        </div>
+        <!-- Interactive Quiz Game -->
+        <QuizGame v-if="quizData && quizData.length > 0" :questions="quizData" @reset="reset" />
 
-        <div class="flex gap-2">
-          <button @click="copyResult" class="sf-btn sf-btn-secondary flex-1 text-xs py-2.5">
-            📋 Kopieren
-          </button>
-          <button @click="exportPDF" class="sf-btn sf-btn-secondary flex-1 text-xs py-2.5">
-            📄 PDF
-          </button>
-          <button @click="exportWord" class="sf-btn sf-btn-primary flex-1 text-xs py-2.5">
-            📝 Word
-          </button>
-        </div>
+        <!-- Fallback: raw AI output for non-quiz or failed parse -->
+        <template v-else>
+          <div class="p-3 rounded-xl text-sm leading-relaxed max-h-80 overflow-y-auto" style="background: var(--bg-primary); color: var(--text-secondary);">
+            <div v-html="resultContent"></div>
+          </div>
+
+          <div class="flex gap-2">
+            <button @click="copyResult" class="sf-btn sf-btn-secondary flex-1 text-xs py-2.5">
+              📋 Kopieren
+            </button>
+            <button @click="exportPDF" class="sf-btn sf-btn-secondary flex-1 text-xs py-2.5">
+              📄 PDF
+            </button>
+            <button @click="exportWord" class="sf-btn sf-btn-primary flex-1 text-xs py-2.5">
+              📝 Word
+            </button>
+          </div>
+        </template>
       </div>
 
       <!-- Demo Box -->
@@ -127,6 +133,7 @@ const hasResult = ref(false)
 const uploadStep = ref('upload')
 const progress = ref(0)
 const resultContent = ref('')
+const quizData = ref(null)
 const manualText = ref('')
 const showTextInput = ref(false)
 const showUnsupportedWarning = ref(false)
@@ -233,6 +240,9 @@ const startProcessing = async ({ mode, content, file, label }) => {
     setTimeout(() => {
       isUploading.value = false
       hasResult.value = true
+      if (props.resultTemplate === 'quiz') {
+        quizData.value = parseQuiz(data.result)
+      }
       resultContent.value = formatAIResponse(data.result)
     }, 500)
   } catch (err) {
@@ -241,6 +251,7 @@ const startProcessing = async ({ mode, content, file, label }) => {
     setTimeout(() => {
       isUploading.value = false
       hasResult.value = true
+      quizData.value = null
       resultContent.value = `<strong style="color: var(--accent-rose);">⚠️ Fehler:</strong><br>${err.message}`
     }, 500)
   }
@@ -253,6 +264,50 @@ const formatAIResponse = (text) => {
     .replace(/\n/g, '<br>')
 }
 
+const parseQuiz = (text) => {
+  // Try to extract JSON from response (handles markdown code blocks too)
+  const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/)
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0])
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].question && Array.isArray(parsed[0].options) && typeof parsed[0].correct === 'number') {
+        return parsed.map(q => ({
+          question: q.question,
+          options: q.options.slice(0, 4),
+          correct: Math.max(0, Math.min(3, q.correct)),
+        }))
+      }
+    } catch {
+      // fallback to text parsing
+    }
+  }
+
+  // Fallback text parser for non-JSON responses
+  const questions = []
+  const blocks = text.split(/(?:Frage\s*\d+[:.)]?|\n\d+[:.)]\s)/i).filter(Boolean)
+  for (const block of blocks) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean)
+    if (lines.length < 2) continue
+    const qLine = lines[0].replace(/^\d+[:.)]?\s*/, '')
+    const opts = []
+    let correctIdx = -1
+    for (const line of lines.slice(1)) {
+      const optMatch = line.match(/^([A-Da-d])[).:]\s*(.+)/)
+      if (optMatch) {
+        opts.push(optMatch[2])
+        if (line.includes('***') || line.includes('**') || line.toLowerCase().includes('(richtig)')) {
+          correctIdx = opts.length - 1
+        }
+      }
+    }
+    if (opts.length >= 2 && correctIdx >= 0) {
+      questions.push({ question: qLine, options: opts.slice(0, 4), correct: correctIdx })
+    }
+  }
+
+  return questions.length > 0 ? questions : null
+}
+
 const reset = () => {
   hasResult.value = false
   isUploading.value = false
@@ -261,6 +316,7 @@ const reset = () => {
   showTextInput.value = false
   showUnsupportedWarning.value = false
   unsupportedFileName.value = ''
+  quizData.value = null
 }
 
 const copyResult = () => {
