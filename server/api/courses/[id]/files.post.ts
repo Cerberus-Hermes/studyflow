@@ -1,5 +1,5 @@
 import { mkdir, writeFile } from 'node:fs/promises'
-import { supabase } from '../../utils/supabase'
+import { supabase } from '../../../utils/supabase'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAuth(event)
