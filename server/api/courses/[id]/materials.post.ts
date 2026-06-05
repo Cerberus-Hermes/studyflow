@@ -1,6 +1,3 @@
-import { requireAuth } from '~/server/utils/auth'
-import { findCourseById, createCourseMaterial, findCourseFileById } from '~/server/utils/db'
-import { callKimiChat, buildMessages, getKimiConfigs } from '~/server/utils/kimi'
 
 const TYPE_PROMPTS: Record<string, string> = {
   quiz: 'Erstelle ein Multiple-Choice-Quiz mit 5 Fragen aus dem folgenden Lernstoff. Jede Frage hat 4 Antwortmöglichkeiten. Antworte AUSSCHLIESSLICH als JSON-Array: [{"question":"...","options":["...","...","...","..."],"correct":0}]',

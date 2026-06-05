@@ -1,5 +1,3 @@
-import { requireAuth } from '~/server/utils/auth'
-import { findUniversityById, createCourse } from '~/server/utils/db'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAuth(event)

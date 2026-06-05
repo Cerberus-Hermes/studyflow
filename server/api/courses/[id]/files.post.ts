@@ -1,5 +1,3 @@
-import { requireAuth } from '~/server/utils/auth'
-import { findCourseById, createCourseFile } from '~/server/utils/db'
 import { mkdir, writeFile } from 'node:fs/promises'
 
 export default defineEventHandler(async (event) => {

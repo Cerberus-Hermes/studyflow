@@ -1,5 +1,3 @@
-import { requireAdmin } from '~/server/utils/auth'
-import { createUniversity, findUniversityBySlug } from '~/server/utils/db'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
