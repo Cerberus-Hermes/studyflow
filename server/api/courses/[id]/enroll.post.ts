@@ -19,8 +19,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Username erforderlich' })
   }
 
-  const user = await findUserByUsername(username)
+  let user = await findUserByUsername(username)
   if (!user) {
+    console.log(`[enroll] Username "${username}" nicht gefunden, versuche E-Mail...`)
+    user = await findUserByEmail(username)
+  }
+  if (!user) {
+    console.error(`[enroll] User weder als Username noch als E-Mail gefunden: "${username}"`)
     throw createError({ statusCode: 404, statusMessage: 'User nicht gefunden' })
   }
 
