@@ -7,50 +7,27 @@ const TYPE_PROMPTS: Record<string, string> = {
   study_guide: 'Erstelle einen strukturierten Lernzettel aus dem folgenden Lernstoff. Gliedere in Themen, Stichpunkte und Merks\u00e4tze.',
 }
 
-function looksLikeReadableText(buf: Buffer): boolean {
-  const sample = buf.subarray(0, 2048).toString('utf-8')
-  // Check for PDF header
-  if (sample.startsWith('%PDF')) return false
-  // Check for common binary signatures
-  if (sample.includes('\u0000\u0000') || sample.includes('\uFFFD\uFFFD')) return false
-  // Must contain reasonable amount of letters
-  const letters = (sample.match(/[a-zA-Z\u00C0-\u00FF]/g) || []).length
-  return letters > sample.length * 0.3
+function isPdf(name: string, mime?: string): boolean {
+  const lower = name.toLowerCase()
+  return mime === 'application/pdf' || lower.endsWith('.pdf')
 }
 
-async function readFileContent(courseFile: any): Promise<string> {
-  const storagePath = courseFile.storagePath
-  let buf: Buffer
+function isImage(name: string, mime?: string): boolean {
+  const imageMimes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+  const imageExts = /\.(jpe?g|png|webp|gif)$/i
+  return imageMimes.has(mime || '') || imageExts.test(name)
+}
 
-  // If it's a URL, fetch it
-  if (typeof storagePath === 'string' && (storagePath.startsWith('http://') || storagePath.startsWith('https://'))) {
-    try {
-      const res = await fetch(storagePath, { redirect: 'follow' })
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`)
-      }
-      const arrayBuffer = await res.arrayBuffer()
-      buf = Buffer.from(arrayBuffer)
-    } catch {
-      return `Datei: ${courseFile.name} (URL konnte nicht geladen werden: ${storagePath})`
-    }
-  } else {
-    // Local filesystem path
-    try {
-      const { readFile } = await import('node:fs/promises')
-      buf = await readFile(storagePath)
-    } catch {
-      return `Datei: ${courseFile.name} (Pfad konnte nicht gelesen werden)`
-    }
-  }
+async function fetchFileBuffer(url: string): Promise<Buffer> {
+  const res = await fetch(url, { redirect: 'follow' })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const arrayBuffer = await res.arrayBuffer()
+  return Buffer.from(arrayBuffer)
+}
 
-  if (!looksLikeReadableText(buf)) {
-    // Binary file (PDF, image, etc.) — can't extract text automatically
-    return `Datei: ${courseFile.name}\n\n[Die Datei ist eine Bin\u00e4rdatei (z.B. PDF) und kann nicht automatisch ausgelesen werden. Bitte kopiere den relevanten Text hierher oder gib mir eine kurze Beschreibung des Inhalts, damit ich das Material erstellen kann.]`
-  }
-
-  const text = buf.toString('utf-8')
-  return `Datei: ${courseFile.name}\n\n${text.substring(0, 12000)}`
+async function readLocalFile(path: string): Promise<Buffer> {
+  const { readFile } = await import('node:fs/promises')
+  return readFile(path)
 }
 
 export default defineEventHandler(async (event) => {
@@ -78,7 +55,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Titel erforderlich' })
   }
 
-  let contentToProcess = ''
+  const apiKey = process.env.KIMI_API_KEY
+  if (!apiKey) throw createError({ statusCode: 500, statusMessage: 'KIMI_API_KEY fehlt' })
+
+  const configs = getKimiConfigs()
+  let messages: Array<{ role: string, content: any }>
 
   // If fileId provided, read the file
   if (fileId) {
@@ -86,22 +67,94 @@ export default defineEventHandler(async (event) => {
     if (!courseFile || courseFile.courseId !== courseId) {
       throw createError({ statusCode: 404, statusMessage: 'Datei nicht gefunden' })
     }
-    contentToProcess = await readFileContent(courseFile)
+
+    const storagePath = courseFile.storagePath
+    const isUrlPath = typeof storagePath === 'string' && (storagePath.startsWith('http://') || storagePath.startsWith('https://'))
+
+    let fileBuf: Buffer
+    try {
+      fileBuf = isUrlPath ? await fetchFileBuffer(storagePath) : await readLocalFile(storagePath)
+    } catch {
+      throw createError({ statusCode: 500, statusMessage: 'Datei konnte nicht gelesen werden' })
+    }
+
+    if (isPdf(courseFile.name, courseFile.mimeType)) {
+      // Inline PDF extraction (same logic as server/utils/kimi.ts)
+      let lastError = ''
+      let pdfText = ''
+      for (const config of configs) {
+        try {
+          const formData = new FormData()
+          formData.append('file', new Blob([new Uint8Array(fileBuf)], { type: 'application/pdf' }), courseFile.name)
+          formData.append('purpose', 'file-extract')
+
+          const uploadRes = await fetch(`${config.baseUrl}/files`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${apiKey}` },
+            body: formData,
+          })
+
+          if (!uploadRes.ok) { lastError = `${config.name}: ${await uploadRes.text()}`; continue }
+
+          const uploadData = await uploadRes.json()
+          const fid = uploadData.id
+          if (!fid) { lastError = `${config.name}: no file id`; continue }
+
+          const contentRes = await fetch(`${config.baseUrl}/files/${fid}/content`, {
+            headers: { Authorization: `Bearer ${apiKey}` },
+          })
+
+          if (!contentRes.ok) { lastError = `${config.name}: ${await contentRes.text()}`; continue }
+
+          const text = await contentRes.text()
+          if (!text?.trim()) { lastError = `${config.name}: PDF enth\u00e4lt keinen extrahierbaren Text`; continue }
+
+          pdfText = text
+          break
+        } catch (err: any) {
+          lastError = `${config.name}: ${err.message}`
+        }
+      }
+
+      if (!pdfText) {
+        throw createError({ statusCode: 502, statusMessage: `PDF konnte nicht gelesen werden: ${lastError}` })
+      }
+
+      messages = [
+        { role: 'system', content: TYPE_PROMPTS[type] },
+        { role: 'system', content: `Dokumentinhalt (${courseFile.name}):\n\n${pdfText.substring(0, 120000)}` },
+        { role: 'user', content: 'Erstelle die gew\u00fcnschte Lernhilfe basierend auf dem Dokument oben.' },
+      ]
+    } else if (isImage(courseFile.name, courseFile.mimeType)) {
+      const mime = courseFile.mimeType || 'image/jpeg'
+      const b64 = fileBuf.toString('base64')
+      const dataUrl = `data:${mime};base64,${b64}`
+      messages = [
+        { role: 'system', content: TYPE_PROMPTS[type] },
+        {
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: dataUrl } },
+            { type: 'text', text: `Analysiere dieses Lernmaterial und erstelle die gew\u00fcnschte Lernhilfe. Datei: ${courseFile.name}` },
+          ],
+        },
+      ]
+    } else {
+      // Plain text file
+      const text = fileBuf.toString('utf-8')
+      messages = [
+        { role: 'system', content: TYPE_PROMPTS[type] },
+        { role: 'user', content: `Datei: ${courseFile.name}\n\n${text.substring(0, 12000)}` },
+      ]
+    }
   } else if (body.content) {
-    contentToProcess = String(body.content).substring(0, 12000)
+    messages = [
+      { role: 'system', content: TYPE_PROMPTS[type] },
+      { role: 'user', content: `Lernstoff:\n\n${String(body.content).substring(0, 12000)}` },
+    ]
   } else {
     throw createError({ statusCode: 400, statusMessage: 'Inhalt oder Datei erforderlich' })
   }
-
-  // Call Kimi
-  const apiKey = process.env.KIMI_API_KEY
-  if (!apiKey) throw createError({ statusCode: 500, statusMessage: 'KIMI_API_KEY fehlt' })
-
-  const configs = getKimiConfigs()
-  const messages = [
-    { role: 'system', content: TYPE_PROMPTS[type] },
-    { role: 'user', content: `Lernstoff:\n\n${contentToProcess}` },
-  ]
 
   const aiResult = await callKimiChat(configs, messages as any, apiKey)
 

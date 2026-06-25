@@ -241,7 +241,9 @@
                   </div>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                  <button v-if="canManageCourse" @click="generateMaterial(file)" class="text-xs px-2 py-1 rounded-lg" style="background: var(--accent-purple); color: white;">🤖 KI</button>
+                  <button v-if="canManageCourse" @click="generateMaterial(file)" :disabled="generatingMaterial" class="text-xs px-2 py-1 rounded-lg transition-all" :style="generatingMaterial ? { background: 'var(--bg-tertiary)', color: 'var(--text-muted)' } : { background: 'var(--accent-purple)', color: 'white' }">
+                    {{ generatingMaterial ? '⏳...' : '🤖 KI' }}
+                  </button>
                   <button v-if="canManageCourse" @click="deleteCourseFile(file.id)" class="text-xs px-2 py-1 rounded-lg" style="background: rgba(224, 122, 95, 0.15); color: var(--accent-rose);">🗑️</button>
                 </div>
               </div>
@@ -285,7 +287,7 @@
           <!-- Materials Tab -->
           <div v-if="courseTab === 'materials'" class="space-y-4">
             <div v-if="canManageCourse" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              <button v-for="t in materialTypes" :key="t.type" @click="generateMaterial(null, t.type, t.label)" class="p-3 rounded-xl text-xs font-semibold transition-all hover:scale-105" style="background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-subtle);">
+              <button v-for="t in materialTypes" :key="t.type" @click="generateMaterial(null, t.type, t.label)" :disabled="generatingMaterial" class="p-3 rounded-xl text-xs font-semibold transition-all hover:scale-105 disabled:opacity-50" style="background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-subtle);">
                 {{ t.emoji }} {{ t.label }}
               </button>
             </div>
@@ -350,6 +352,7 @@ const courseStudents = ref([])
 const courseMaterials = ref([])
 const enrollUsername = ref('')
 const myRequests = ref([])
+const generatingMaterial = ref(false)
 
 // Autocomplete state
 const inviteSearchResults = ref({})
@@ -678,6 +681,8 @@ function selectEnrollUser(username) {
 
 async function generateMaterial(file, type, title) {
   if (!selectedCourse.value) return
+  if (generatingMaterial.value) return
+  generatingMaterial.value = true
   try {
     await $fetch(`/api/courses/${selectedCourse.value.id}/materials`, {
       method: 'POST',
@@ -688,9 +693,11 @@ async function generateMaterial(file, type, title) {
       }
     })
     await fetchCourseMaterials(selectedCourse.value.id)
-    alert('Material wird generiert! ✅')
+    alert('Material erfolgreich generiert! ✅')
   } catch (e) {
     alert('Fehler: ' + (e?.data?.statusMessage || e?.message))
+  } finally {
+    generatingMaterial.value = false
   }
 }
 
