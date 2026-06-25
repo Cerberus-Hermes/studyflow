@@ -22,6 +22,33 @@
 
       <div class="sf-card p-6 space-y-4">
         <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(155, 93, 229, 0.15);">👥</div>
+          <div>
+            <h3 class="text-lg font-bold" style="color: var(--text-primary);">User-Verwaltung</h3>
+            <p class="text-xs" style="color: var(--text-muted);">Rolle zuweisen oder ändern</p>
+          </div>
+        </div>
+        <div v-if="usersLoading" class="text-center py-4 text-sm" style="color: var(--text-muted);">Lädt...</div>
+        <div v-else class="space-y-2 max-h-80 overflow-y-auto pr-1">
+          <div v-for="user in allUsers" :key="user.id" class="flex items-center justify-between p-3 rounded-xl text-sm" style="background: var(--bg-tertiary);">
+            <div class="min-w-0">
+              <p class="font-medium truncate" style="color: var(--text-primary);">{{ user.username }}</p>
+              <p class="text-xs" style="color: var(--text-muted);">{{ user.email }}</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase" :style="roleBadgeStyle(user.role)">{{ user.role }}</span>
+              <select :value="user.role" class="sf-input sf-select text-xs py-1 px-2 w-28" @change="updateUserRole(user.id, $event.target.value)">
+                <option value="user">User</option>
+                <option value="teacher">Teacher</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sf-card p-6 space-y-4">
+        <div class="flex items-center gap-3 mb-2">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(42, 157, 143, 0.15);">🔐</div>
           <div>
             <h3 class="text-lg font-bold" style="color: var(--text-primary);">KI-Konfiguration</h3>
@@ -101,6 +128,8 @@ defineEmits(['reset-data'])
 const auth = useAuthStore()
 const allFeedback = ref([])
 const loadingFeedback = ref(false)
+const allUsers = ref([])
+const usersLoading = ref(false)
 
 const userTypeLabels = {
   student: 'Student / Schüler',
@@ -125,7 +154,43 @@ async function loadAllFeedback() {
   }
 }
 
+async function loadAllUsers() {
+  usersLoading.value = true
+  try {
+    const data = await $fetch('/api/admin/users')
+    allUsers.value = data.users || []
+  } catch {
+    allUsers.value = []
+  } finally {
+    usersLoading.value = false
+  }
+}
+
+async function updateUserRole(userId, role) {
+  try {
+    await $fetch(`/api/admin/users/${userId}`, {
+      method: 'PATCH',
+      body: { role }
+    })
+    const user = allUsers.value.find(u => u.id === userId)
+    if (user) user.role = role
+    alert('Rolle aktualisiert! ✅')
+  } catch (e) {
+    alert('Fehler: ' + (e?.data?.statusMessage || e?.message))
+    await loadAllUsers()
+  }
+}
+
+function roleBadgeStyle(role) {
+  if (role === 'admin') return { background: 'rgba(224, 122, 95, 0.15)', color: '#e07a5f' }
+  if (role === 'teacher') return { background: 'rgba(155, 93, 229, 0.15)', color: '#9b5de5' }
+  return { background: 'rgba(42, 157, 143, 0.15)', color: '#2a9d8f' }
+}
+
 onMounted(() => {
-  if (auth.isAdmin) loadAllFeedback()
+  if (auth.isAdmin) {
+    loadAllFeedback()
+    loadAllUsers()
+  }
 })
 </script>

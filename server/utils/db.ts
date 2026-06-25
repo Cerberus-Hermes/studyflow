@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 
 export type SubscriptionTier = 'free' | 'pro' | 'premium'
-export type UserRole = 'user' | 'admin'
+export type UserRole = 'user' | 'teacher' | 'admin'
 
 export interface User {
   id: string
@@ -285,6 +285,21 @@ export async function findUserById(id: string): Promise<User | undefined> {
     .single()
   if (error || !data) return undefined
   return toDbUser(data)
+}
+
+export async function searchUsers(query: string, limit: number = 10): Promise<Pick<User, 'id' | 'username' | 'email'>[]> {
+  const q = `%${query.trim()}%`
+  const { data, error } = await supabase!
+    .from('users')
+    .select('id, username, email')
+    .or(`username.ilike.${q},email.ilike.${q}`)
+    .limit(limit)
+  if (error || !data) return []
+  return data.map((row: any) => ({
+    id: row.id,
+    username: row.username,
+    email: row.email,
+  }))
 }
 
 export async function createUser(user: Omit<User, 'id' | 'createdAt'> & { role?: UserRole }): Promise<User> {
@@ -1252,4 +1267,208 @@ export async function findCourseMaterialById(id: string): Promise<CourseMaterial
 export async function deleteCourseMaterial(id: string): Promise<void> {
   const { error } = await supabase!.from('course_materials').delete().eq('id', id)
   if (error) throw new Error(error.message)
+}
+
+
+// ========== ADMIN USER MANAGEMENT ==========
+
+export async function listAllUsers(): Promise<Pick<User, 'id' | 'username' | 'email' | 'role' | 'createdAt'>[]> {
+  const { data, error } = await supabase!
+    .from('users')
+    .select('id, username, email, role, created_at')
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    role: row.role,
+    createdAt: row.created_at,
+  }))
+}
+
+export async function updateUserRole(userId: string, role: UserRole): Promise<void> {
+  const { error } = await supabase!
+    .from('users')
+    .update({ role })
+    .eq('id', userId)
+  if (error) throw new Error(error.message)
+}
+
+export async function listAllUniversities(): Promise<University[]> {
+  const { data, error } = await supabase!
+    .from('universities')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map(toDbUniversity)
+}
+
+export async function applyToUniversity(universityId: string, userId: string, role: 'teacher' | 'student'): Promise<UniversityMember> {
+  const entry: UniversityMember = {
+    id: crypto.randomUUID(),
+    universityId,
+    userId,
+    role,
+    invitedBy: userId,
+    invitedAt: new Date().toISOString(),
+    status: 'pending',
+    inviteEmail: null,
+  }
+  const { error } = await supabase!.from('university_members').insert(fromDbUniversityMember(entry))
+  if (error) throw new Error(error.message)
+  return entry
+}
+
+export async function updateUniversityMemberStatus(memberId: string, status: 'pending' | 'accepted'): Promise<void> {
+  const { error } = await supabase!
+    .from('university_members')
+    .update({ status })
+    .eq('id', memberId)
+  if (error) throw new Error(error.message)
+}
+
+export async function listUniversityMembersWithUsers(universityId: string): Promise<(UniversityMember & { username?: string; email?: string })[]> {
+  const { data, error } = await supabase!
+    .from('university_members')
+    .select('*, users:user_id (username, email)')
+    .eq('university_id', universityId)
+    .order('invited_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map((row: any) => ({
+    ...toDbUniversityMember(row),
+    username: row.users?.username || row.invite_email || null,
+    email: row.users?.email || null,
+  }))
+}
+
+export async function listCourseEnrollmentsWithUsers(courseId: string): Promise<(CourseEnrollment & { username?: string; email?: string })[]> {
+  const { data, error } = await supabase!
+    .from('course_enrollments')
+    .select('*, users:user_id (username, email)')
+    .eq('course_id', courseId)
+    .order('enrolled_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map((row: any) => ({
+    ...toDbCourseEnrollment(row),
+    username: row.users?.username || null,
+    email: row.users?.email || null,
+  }))
+}
+
+export async function listMyPendingUniversityRequests(userId: string): Promise<(UniversityMember & { university_name?: string })[]> {
+  const { data, error } = await supabase!
+    .from('university_members')
+    .select('*, universities:university_id (name)')
+    .eq('user_id', userId)
+    .eq('status', 'pending')
+    .order('invited_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map((row: any) => ({
+    ...toDbUniversityMember(row),
+    university_name: row.universities?.name || null,
+  }))
+}
+
+export async function isUniversityTeacher(universityId: string, userId: string): Promise<boolean> {
+  const member = await findUniversityMember(universityId, userId)
+  return !!member && member.role === 'teacher' && member.status === 'accepted'
+}
+
+export async function isUniversityMember(universityId: string, userId: string): Promise<boolean> {
+  const member = await findUniversityMember(universityId, userId)
+  return !!member && member.status === 'accepted'
+}
+
+
+// --- Course Request CRUD ---
+
+export interface CourseRequest {
+  id: string
+  courseId: string
+  userId: string
+  status: 'pending' | 'accepted' | 'rejected'
+  requestedAt: string
+}
+
+function toDbCourseRequest(row: any): CourseRequest {
+  return {
+    id: row.id,
+    courseId: row.course_id,
+    userId: row.user_id,
+    status: row.status,
+    requestedAt: row.requested_at,
+  }
+}
+
+function fromDbCourseRequest(r: CourseRequest): any {
+  return {
+    id: r.id,
+    course_id: r.courseId,
+    user_id: r.userId,
+    status: r.status,
+    requested_at: r.requestedAt,
+  }
+}
+
+export async function createCourseRequest(courseId: string, userId: string): Promise<CourseRequest> {
+  const entry: CourseRequest = {
+    id: crypto.randomUUID(),
+    courseId,
+    userId,
+    status: 'pending',
+    requestedAt: new Date().toISOString(),
+  }
+  const { error } = await supabase!.from('course_requests').insert(fromDbCourseRequest(entry))
+  if (error) throw new Error(error.message)
+  return entry
+}
+
+export async function listCourseRequests(courseId: string): Promise<(CourseRequest & { username?: string; email?: string })[]> {
+  const { data, error } = await supabase!
+    .from('course_requests')
+    .select('*, users:user_id (username, email)')
+    .eq('course_id', courseId)
+    .eq('status', 'pending')
+    .order('requested_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map((row: any) => ({
+    ...toDbCourseRequest(row),
+    username: row.users?.username || null,
+    email: row.users?.email || null,
+  }))
+}
+
+export async function listMyCourseRequests(userId: string): Promise<(CourseRequest & { course_name?: string; university_name?: string })[]> {
+  const { data, error } = await supabase!
+    .from('course_requests')
+    .select('*, courses:course_id (name, universities:university_id (name))')
+    .eq('user_id', userId)
+    .eq('status', 'pending')
+    .order('requested_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map((row: any) => ({
+    ...toDbCourseRequest(row),
+    course_name: row.courses?.name || null,
+    university_name: row.courses?.universities?.name || null,
+  }))
+}
+
+export async function updateCourseRequestStatus(requestId: string, status: 'accepted' | 'rejected'): Promise<void> {
+  const { error } = await supabase!
+    .from('course_requests')
+    .update({ status })
+    .eq('id', requestId)
+  if (error) throw new Error(error.message)
+}
+
+export async function findCourseRequest(courseId: string, userId: string): Promise<CourseRequest | undefined> {
+  const { data, error } = await supabase!
+    .from('course_requests')
+    .select('*')
+    .eq('course_id', courseId)
+    .eq('user_id', userId)
+    .single()
+  if (error || !data) return undefined
+  return toDbCourseRequest(data)
 }

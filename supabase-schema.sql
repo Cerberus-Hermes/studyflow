@@ -247,3 +247,22 @@ CREATE INDEX IF NOT EXISTS idx_course_enrollments_user_id ON course_enrollments(
 CREATE INDEX IF NOT EXISTS idx_course_files_course_id ON course_files(course_id);
 CREATE INDEX IF NOT EXISTS idx_course_materials_course_id ON course_materials(course_id);
 CREATE INDEX IF NOT EXISTS idx_course_materials_type ON course_materials(type);
+
+
+-- Course Enrollment Requests (for students to request access to courses)
+CREATE TABLE IF NOT EXISTS course_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL CHECK (status IN ('pending', 'accepted', 'rejected')) DEFAULT 'pending',
+  requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(course_id, user_id)
+);
+
+ALTER TABLE course_requests ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "course_requests_allow_all" ON course_requests;
+CREATE POLICY "course_requests_allow_all" ON course_requests FOR ALL USING (true) WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_course_requests_course_id ON course_requests(course_id);
+CREATE INDEX IF NOT EXISTS idx_course_requests_user_id ON course_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_course_requests_status ON course_requests(status);

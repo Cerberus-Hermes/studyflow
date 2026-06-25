@@ -7,9 +7,9 @@ export default defineEventHandler(async (event) => {
   const university = await findUniversityById(universityId)
   if (!university) throw createError({ statusCode: 404, statusMessage: 'Hochschule nicht gefunden' })
 
-  // Only admin or teacher of this university can invite
-  // TODO: check if user is member with teacher/admin role
-  if (session.role !== 'admin' && university.createdBy !== session.userId) {
+  // Only admin, creator, or teacher of this university can invite
+  const isTeacherMember = await isUniversityTeacher(universityId, session.userId)
+  if (session.role !== 'admin' && university.createdBy !== session.userId && !isTeacherMember) {
     throw createError({ statusCode: 403, statusMessage: 'Keine Berechtigung' })
   }
 

@@ -9,22 +9,67 @@
       </div>
     </div>
 
-    <div v-if="loading" class="text-center py-8" style="color: var(--text-muted);">Lädt...</div>
-    <div v-else-if="courses.length === 0" class="sf-card p-8 text-center">
-      <div class="text-4xl mb-3">📚</div>
-      <p class="text-sm" style="color: var(--text-muted);">Du bist noch keinem Kurs zugeordnet. Warte auf eine Einladung von deinem Lehrpersonal.</p>
+    <!-- Tabs -->
+    <div class="flex gap-1 p-1 rounded-xl" style="background: var(--bg-tertiary);">
+      <button v-for="t in tabs" :key="t.id" @click="activeTab = t.id" class="px-4 py-2 rounded-lg text-xs font-semibold transition-all" :style="activeTab === t.id ? { background: 'var(--accent-cool)', color: '#fff' } : { color: 'var(--text-muted)' }">{{ t.label }}</button>
     </div>
-    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-      <div v-for="course in courses" :key="course.id" class="sf-card sf-dashboard-card p-5 group transition-all hover:scale-[1.01]">
-        <div class="flex items-start justify-between gap-4">
-          <div class="min-w-0">
-            <h4 class="text-lg font-bold truncate" style="color: var(--text-primary);">{{ course.name }}</h4>
-            <p class="text-xs mt-1" style="color: var(--text-muted);">{{ course.description || 'Keine Beschreibung' }}</p>
-            <p class="text-[10px] mt-1 font-medium" style="color: var(--accent-purple);">🏛️ {{ course.university_name }}</p>
+
+    <!-- MY COURSES -->
+    <div v-if="activeTab === 'my'">
+      <div v-if="loading" class="text-center py-8" style="color: var(--text-muted);">Lädt...</div>
+      <div v-else-if="courses.length === 0" class="sf-card p-8 text-center">
+        <div class="text-4xl mb-3">📚</div>
+        <p class="text-sm" style="color: var(--text-muted);">Du bist noch keinem Kurs zugeordnet. Sieh dir die verfügbaren Kurse an oder stelle eine Beitrittsanfrage.</p>
+      </div>
+      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div v-for="course in courses" :key="course.id" class="sf-card sf-dashboard-card p-5 group transition-all hover:scale-[1.01]">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <h4 class="text-lg font-bold truncate" style="color: var(--text-primary);">{{ course.name }}</h4>
+              <p class="text-xs mt-1" style="color: var(--text-muted);">{{ course.description || 'Keine Beschreibung' }}</p>
+              <p class="text-[10px] mt-1 font-medium" style="color: var(--accent-purple);">🏛️ {{ course.university_name }}</p>
+            </div>
+            <button @click="openCourse(course)" class="text-xs px-3 py-1.5 rounded-lg transition-all hover:scale-105 shrink-0" style="background: var(--accent-cool); color: white;">
+              Öffnen
+            </button>
           </div>
-          <button @click="openCourse(course)" class="text-xs px-3 py-1.5 rounded-lg transition-all hover:scale-105 shrink-0" style="background: var(--accent-cool); color: white;">
-            Öffnen
-          </button>
+        </div>
+      </div>
+
+      <!-- My pending course requests -->
+      <div v-if="myCourseRequests.length" class="mt-6">
+        <h3 class="text-sm font-bold mb-3" style="color: var(--text-primary);">⏳ Ausstehende Kurs-Anfragen</h3>
+        <div class="space-y-2">
+          <div v-for="req in myCourseRequests" :key="req.id" class="sf-card p-3 flex items-center justify-between gap-3">
+            <div>
+              <p class="text-sm font-medium" style="color: var(--text-primary);">{{ req.course_name }}</p>
+              <p class="text-[10px]" style="color: var(--text-muted);">🏛️ {{ req.university_name }}</p>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase" :style="statusBadgeStyle(req.status)">{{ req.status }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AVAILABLE COURSES -->
+    <div v-if="activeTab === 'available'">
+      <div v-if="availableLoading" class="text-center py-8" style="color: var(--text-muted);">Lädt...</div>
+      <div v-else-if="availableCourses.length === 0" class="sf-card p-8 text-center">
+        <div class="text-4xl mb-3">🎓</div>
+        <p class="text-sm" style="color: var(--text-muted);">Keine verfügbaren Kurse. Tritt einer Hochschule bei, um Kurse zu entdecken.</p>
+      </div>
+      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div v-for="course in availableCourses" :key="course.id" class="sf-card sf-dashboard-card p-5 group transition-all hover:scale-[1.01]">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <h4 class="text-lg font-bold truncate" style="color: var(--text-primary);">{{ course.name }}</h4>
+              <p class="text-xs mt-1" style="color: var(--text-muted);">{{ course.description || 'Keine Beschreibung' }}</p>
+              <p class="text-[10px] mt-1 font-medium" style="color: var(--accent-purple);">🏛️ {{ course.university_name }}</p>
+            </div>
+            <button @click="requestCourse(course.id)" class="text-xs px-3 py-1.5 rounded-lg transition-all hover:scale-105 shrink-0" style="background: var(--accent-warm); color: white;">
+              Beitrittsanfrage
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -107,6 +152,12 @@
 <script setup>
 const auth = useAuthStore()
 
+const activeTab = ref('my')
+const tabs = [
+  { id: 'my', label: '📚 Meine Kurse' },
+  { id: 'available', label: '🔍 Verfügbare Kurse' },
+]
+
 const courses = ref([])
 const loading = ref(true)
 const selectedCourse = ref(null)
@@ -120,8 +171,14 @@ const courseFiles = ref([])
 const courseMaterials = ref([])
 const activeMaterial = ref(null)
 
+const availableCourses = ref([])
+const availableLoading = ref(false)
+const myCourseRequests = ref([])
+
 onMounted(async () => {
   await fetchCourses()
+  await fetchAvailableCourses()
+  await fetchMyCourseRequests()
 })
 
 watch(selectedCourse, async (course) => {
@@ -140,6 +197,38 @@ async function fetchCourses() {
     courses.value = []
   } finally {
     loading.value = false
+  }
+}
+
+async function fetchAvailableCourses() {
+  availableLoading.value = true
+  try {
+    const data = await $fetch('/api/my/available-courses')
+    availableCourses.value = data.courses || []
+  } catch {
+    availableCourses.value = []
+  } finally {
+    availableLoading.value = false
+  }
+}
+
+async function fetchMyCourseRequests() {
+  try {
+    const data = await $fetch('/api/my/course-requests')
+    myCourseRequests.value = data.requests || []
+  } catch {
+    myCourseRequests.value = []
+  }
+}
+
+async function requestCourse(courseId) {
+  try {
+    await $fetch(`/api/courses/${courseId}/request`, { method: 'POST' })
+    await fetchAvailableCourses()
+    await fetchMyCourseRequests()
+    alert('Beitrittsanfrage gesendet! ✅')
+  } catch (e) {
+    alert('Fehler: ' + (e?.data?.statusMessage || e?.message))
   }
 }
 
@@ -183,6 +272,11 @@ function isUrl(str) {
 function materialEmoji(type) {
   const map = { quiz: '❓', flashcards: '🃏', summary: '📄', practice_exam: '📝', study_guide: '📖' }
   return map[type] || '📄'
+}
+
+function statusBadgeStyle(status) {
+  if (status === 'accepted') return { background: 'rgba(42, 157, 143, 0.15)', color: '#2a9d8f' }
+  return { background: 'rgba(244, 162, 97, 0.15)', color: '#f4a261' }
 }
 
 function formatContent(text) {

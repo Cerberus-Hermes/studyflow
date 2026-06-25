@@ -7,8 +7,9 @@ export default defineEventHandler(async (event) => {
   const university = await findUniversityById(universityId)
   if (!university) throw createError({ statusCode: 404, statusMessage: 'Hochschule nicht gefunden' })
 
-  // Only admin or teacher can create courses
-  if (session.role !== 'admin' && session.role !== 'teacher') {
+  // Only admin or teacher member of this university can create courses
+  const isTeacherMember = await isUniversityTeacher(universityId, session.userId)
+  if (session.role !== 'admin' && university.createdBy !== session.userId && !isTeacherMember) {
     throw createError({ statusCode: 403, statusMessage: 'Nur Lehrpersonal kann Kurse anlegen' })
   }
 

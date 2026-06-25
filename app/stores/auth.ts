@@ -4,7 +4,7 @@ export interface PublicUser {
   id: string
   username: string
   email: string
-  role: 'user' | 'admin'
+  role: 'user' | 'teacher' | 'admin'
   subscriptionTier: 'free' | 'pro' | 'premium'
   aiCreditsUsed: number
   aiCreditsLimit: number
@@ -19,6 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!user.value)
   const isAdmin = computed(() => user.value?.role === 'admin')
+  const isTeacher = computed(() => user.value?.role === 'teacher')
   const canAccessSettings = computed(() => isAdmin.value)
 
   // Subscription computed properties
@@ -81,6 +82,7 @@ export const useAuthStore = defineStore('auth', () => {
     initialized,
     isLoggedIn,
     isAdmin,
+    isTeacher,
     canAccessSettings,
     subscriptionTier,
     aiCreditsRemaining,
