@@ -76,7 +76,7 @@
               <p class="text-xs mt-1" style="color: var(--text-muted);">{{ uni.description || 'Keine Beschreibung' }}</p>
               <div class="flex items-center gap-2 mt-2">
                 <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide" :style="memberBadgeStyle(uni.memberRole)">
-                  {{ uni.memberRole === 'teacher' ? '👨‍🏫 Lehrpersonal' : '🎓 Student' }}
+                  {{ uni.memberRole === 'teacher' ? '👨‍🏫 Lehrpersonal' : uni.memberRole === 'admin' ? '👑 Admin' : '🎓 Student' }}
                 </span>
               </div>
             </div>
@@ -370,7 +370,6 @@ const materialTypes = [
 const canManageCourse = computed(() => {
   if (!selectedCourse.value) return false
   if (auth.isAdmin) return true
-  // Check if user is teacher of the university this course belongs to
   const uni = universities.value.find(u => u.id === selectedCourse.value.university_id)
   return uni?.memberRole === 'teacher'
 })
@@ -693,6 +692,7 @@ async function generateMaterial(file, type, title) {
 }
 
 function memberBadgeStyle(role) {
+  if (role === 'admin') return { background: 'rgba(224, 122, 95, 0.15)', color: '#e07a5f' }
   if (role === 'teacher') return { background: 'rgba(155, 93, 229, 0.15)', color: '#9b5de5' }
   return { background: 'rgba(42, 157, 143, 0.15)', color: '#2a9d8f' }
 }
