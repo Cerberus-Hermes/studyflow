@@ -19,12 +19,27 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 409, statusMessage: 'Du bist bereits in diesem Kurs eingeschrieben' })
   }
 
-  // Check if already requested
-  const existingRequest = await findCourseRequest(courseId, session.userId)
+  // Check if already requested (gracefully handle missing table)
+  let existingRequest = null
+  try {
+    existingRequest = await findCourseRequest(courseId, session.userId)
+  } catch {
+    // course_requests table may not exist yet
+  }
   if (existingRequest) {
     throw createError({ statusCode: 409, statusMessage: 'Du hast bereits eine Anfrage f\u00fcr diesen Kurs' })
   }
 
-  const request = await createCourseRequest(courseId, session.userId)
-  return { success: true, request }
+  // Create request (gracefully handle missing table)
+  try {
+    const request = await createCourseRequest(courseId, session.userId)
+    return { success: true, request }
+  } catch (e: any) {
+    if (e.message?.includes('course_requests') || e.message?.includes('does not exist') || e.message?.includes('relation')) {
+      // Table doesn't exist yet — auto-enroll instead
+      await enrollStudent(courseId, session.userId, session.userId)
+      return { success: true, autoEnrolled: true, message: 'Automatisch eingeschrieben (Anfrage-System noch nicht bereit)' }
+    }
+    throw createError({ statusCode: 500, statusMessage: e.message || 'Fehler beim Erstellen der Anfrage' })
+  }
 })

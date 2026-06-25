@@ -54,6 +54,11 @@
     <!-- AVAILABLE COURSES -->
     <div v-if="activeTab === 'available'">
       <div v-if="availableLoading" class="text-center py-8" style="color: var(--text-muted);">Lädt...</div>
+      <div v-else-if="availableError" class="sf-card p-6 text-center" style="border: 1px solid rgba(224, 122, 95, 0.3);">
+        <div class="text-2xl mb-2">⚠️</div>
+        <p class="text-sm font-medium" style="color: var(--accent-rose);">{{ availableError }}</p>
+        <button @click="fetchAvailableCourses" class="sf-btn sf-btn-secondary text-xs mt-3">Erneut versuchen</button>
+      </div>
       <div v-else-if="availableCourses.length === 0" class="sf-card p-8 text-center">
         <div class="text-4xl mb-3">🎓</div>
         <p class="text-sm" style="color: var(--text-muted);">Keine verfügbaren Kurse. Tritt einer Hochschule bei, um Kurse zu entdecken.</p>
@@ -173,6 +178,7 @@ const activeMaterial = ref(null)
 
 const availableCourses = ref([])
 const availableLoading = ref(false)
+const availableError = ref('')
 const myCourseRequests = ref([])
 
 onMounted(async () => {
@@ -202,11 +208,14 @@ async function fetchCourses() {
 
 async function fetchAvailableCourses() {
   availableLoading.value = true
+  availableError.value = ''
   try {
     const data = await $fetch('/api/my/available-courses')
     availableCourses.value = data.courses || []
-  } catch {
+  } catch (e) {
     availableCourses.value = []
+    availableError.value = e?.data?.statusMessage || e?.message || 'Fehler beim Laden'
+    console.error('[available-courses]', e)
   } finally {
     availableLoading.value = false
   }

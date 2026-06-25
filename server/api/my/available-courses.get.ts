@@ -9,10 +9,16 @@ export default defineEventHandler(async (event) => {
     .eq('user_id', session.userId)
     .eq('status', 'accepted')
 
-  if (memberError) throw new Error(memberError.message)
+  if (memberError) {
+    console.error('[available-courses] member error:', memberError.message)
+    throw createError({ statusCode: 500, statusMessage: 'DB-Fehler (members)' })
+  }
+
   const uniIds = (memberData || []).map((m: any) => m.university_id)
 
-  if (uniIds.length === 0) return { courses: [] }
+  if (uniIds.length === 0) {
+    return { courses: [] }
+  }
 
   // 2. Get all courses from those universities
   const { data: coursesData, error: coursesError } = await supabase!
@@ -20,7 +26,10 @@ export default defineEventHandler(async (event) => {
     .select('*, universities:university_id (name)')
     .in('university_id', uniIds)
 
-  if (coursesError) throw new Error(coursesError.message)
+  if (coursesError) {
+    console.error('[available-courses] courses error:', coursesError.message)
+    throw createError({ statusCode: 500, statusMessage: 'DB-Fehler (courses)' })
+  }
 
   // 3. Get my enrollments
   const { data: enrollData, error: enrollError } = await supabase!
@@ -28,18 +37,28 @@ export default defineEventHandler(async (event) => {
     .select('course_id')
     .eq('user_id', session.userId)
 
-  if (enrollError) throw new Error(enrollError.message)
+  if (enrollError) {
+    console.error('[available-courses] enrollments error:', enrollError.message)
+    throw createError({ statusCode: 500, statusMessage: 'DB-Fehler (enrollments)' })
+  }
+
   const enrolledCourseIds = new Set((enrollData || []).map((e: any) => e.course_id))
 
-  // 4. Get my pending requests
-  const { data: reqData, error: reqError } = await supabase!
-    .from('course_requests')
-    .select('course_id')
-    .eq('user_id', session.userId)
-    .eq('status', 'pending')
+  // 4. Get my pending requests (gracefully handle missing table)
+  let requestedCourseIds = new Set<string>()
+  try {
+    const { data: reqData, error: reqError } = await supabase!
+      .from('course_requests')
+      .select('course_id')
+      .eq('user_id', session.userId)
+      .eq('status', 'pending')
 
-  if (reqError) throw new Error(reqError.message)
-  const requestedCourseIds = new Set((reqData || []).map((r: any) => r.course_id))
+    if (!reqError && reqData) {
+      requestedCourseIds = new Set((reqData as any[]).map((r: any) => r.course_id))
+    }
+  } catch {
+    // course_requests table may not exist yet — ignore
+  }
 
   // 5. Filter
   const courses = (coursesData || [])

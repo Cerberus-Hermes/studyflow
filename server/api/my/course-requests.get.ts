@@ -1,6 +1,11 @@
 
 export default defineEventHandler(async (event) => {
   const session = await requireAuth(event)
-  const requests = await listMyCourseRequests(session.userId)
-  return { requests }
+  try {
+    const requests = await listMyCourseRequests(session.userId)
+    return { requests }
+  } catch {
+    // course_requests table may not exist yet
+    return { requests: [] }
+  }
 })
