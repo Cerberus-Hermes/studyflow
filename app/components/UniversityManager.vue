@@ -240,7 +240,10 @@
                     <p class="text-[10px]" style="color: var(--text-muted);">{{ formatFileSize(file.size_bytes) }}</p>
                   </div>
                 </div>
-                <button v-if="canManageCourse" @click="generateMaterial(file)" class="text-xs px-2 py-1 rounded-lg shrink-0" style="background: var(--accent-purple); color: white;">🤖 KI</button>
+                <div class="flex items-center gap-2 shrink-0">
+                  <button v-if="canManageCourse" @click="generateMaterial(file)" class="text-xs px-2 py-1 rounded-lg" style="background: var(--accent-purple); color: white;">🤖 KI</button>
+                  <button v-if="canManageCourse" @click="deleteCourseFile(file.id)" class="text-xs px-2 py-1 rounded-lg" style="background: rgba(224, 122, 95, 0.15); color: var(--accent-rose);">🗑️</button>
+                </div>
               </div>
             </div>
             <p v-else class="text-xs text-center py-6" style="color: var(--text-muted);">Noch keine Dateien</p>
@@ -686,6 +689,17 @@ async function generateMaterial(file, type, title) {
     })
     await fetchCourseMaterials(selectedCourse.value.id)
     alert('Material wird generiert! ✅')
+  } catch (e) {
+    alert('Fehler: ' + (e?.data?.statusMessage || e?.message))
+  }
+}
+
+async function deleteCourseFile(fileId) {
+  if (!selectedCourse.value) return
+  if (!confirm('Datei wirklich l\u00f6schen?')) return
+  try {
+    await $fetch(`/api/courses/${selectedCourse.value.id}/files/${fileId}`, { method: 'DELETE' })
+    await fetchCourseFiles(selectedCourse.value.id)
   } catch (e) {
     alert('Fehler: ' + (e?.data?.statusMessage || e?.message))
   }
