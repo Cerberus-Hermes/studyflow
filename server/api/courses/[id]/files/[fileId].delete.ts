@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
     try {
       const urlParts = storagePath.split('/course-files/')
       if (urlParts.length === 2) {
-        await supabase!.storage.from('course-files').remove([urlParts[1]])
+        await getSupabase().storage.from('course-files').remove([urlParts[1]])
       }
     } catch {
       // Ignore storage deletion errors, still delete DB record

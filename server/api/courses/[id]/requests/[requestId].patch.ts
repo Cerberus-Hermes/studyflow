@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
   // If accepted, also enroll the student
   if (status === 'accepted') {
     // Need to find user_id from request - fetch it
-    const { data } = await supabase!.from('course_requests').select('user_id').eq('id', requestId).single()
+    const { data } = await getSupabase().from('course_requests').select('user_id').eq('id', requestId).single()
     if (data?.user_id) {
       const existing = await findCourseEnrollment(courseId, data.user_id)
       if (!existing) {

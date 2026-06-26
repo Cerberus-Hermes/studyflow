@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { getSupabase } from './supabase'
 
 export type SubscriptionTier = 'free' | 'pro' | 'premium'
 export type UserRole = 'user' | 'teacher' | 'admin'
@@ -258,7 +258,7 @@ function toDbFeedback(row: any): FeedbackEntry {
 // ========== USER FUNCTIONS ==========
 
 export async function findUserByUsername(username: string): Promise<User | undefined> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('users')
     .select('*')
     .ilike('username', username)
@@ -268,7 +268,7 @@ export async function findUserByUsername(username: string): Promise<User | undef
 }
 
 export async function findUserByEmail(email: string): Promise<User | undefined> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('users')
     .select('*')
     .ilike('email', email)
@@ -278,7 +278,7 @@ export async function findUserByEmail(email: string): Promise<User | undefined> 
 }
 
 export async function findUserById(id: string): Promise<User | undefined> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('users')
     .select('*')
     .eq('id', id)
@@ -289,7 +289,7 @@ export async function findUserById(id: string): Promise<User | undefined> {
 
 export async function searchUsers(query: string, limit: number = 10): Promise<Pick<User, 'id' | 'username' | 'email'>[]> {
   const q = `%${query.trim()}%`
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('users')
     .select('id, username, email')
     .or(`username.ilike.${q},email.ilike.${q}`)
@@ -313,7 +313,7 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt'> & { role?:
     subscriptionExpiresAt: user.subscriptionExpiresAt || null,
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('users').insert(fromDbUser(entry))
+  const { error } = await getSupabase().from('users').insert(fromDbUser(entry))
   if (error) throw new Error(error.message)
   return entry
 }
@@ -321,7 +321,7 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt'> & { role?:
 // ========== TASK FUNCTIONS ==========
 
 export async function listTasks(userId: string): Promise<Task[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('tasks')
     .select('*')
     .eq('user_id', userId)
@@ -339,13 +339,13 @@ export async function createTask(userId: string, text: string, priority: number)
     done: false,
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('tasks').insert(fromDbTask(entry))
+  const { error } = await getSupabase().from('tasks').insert(fromDbTask(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function updateTask(userId: string, id: string, updates: Partial<Pick<Task, 'text' | 'priority' | 'done'>>): Promise<Task> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('tasks')
     .update(updates)
     .eq('id', id)
@@ -358,7 +358,7 @@ export async function updateTask(userId: string, id: string, updates: Partial<Pi
 }
 
 export async function deleteTask(userId: string, id: string): Promise<void> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('tasks')
     .delete()
     .eq('id', id)
@@ -369,7 +369,7 @@ export async function deleteTask(userId: string, id: string): Promise<void> {
 // ========== GOAL FUNCTIONS ==========
 
 export async function listGoals(userId: string): Promise<Goal[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('goals')
     .select('*')
     .eq('user_id', userId)
@@ -387,13 +387,13 @@ export async function createGoal(userId: string, text: string, date: string): Pr
     done: false,
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('goals').insert(fromDbGoal(entry))
+  const { error } = await getSupabase().from('goals').insert(fromDbGoal(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function updateGoal(userId: string, id: string, updates: Partial<Pick<Goal, 'text' | 'date' | 'done'>>): Promise<Goal> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('goals')
     .update(updates)
     .eq('id', id)
@@ -406,7 +406,7 @@ export async function updateGoal(userId: string, id: string, updates: Partial<Pi
 }
 
 export async function deleteGoal(userId: string, id: string): Promise<void> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('goals')
     .delete()
     .eq('id', id)
@@ -417,7 +417,7 @@ export async function deleteGoal(userId: string, id: string): Promise<void> {
 // ========== STUDY PLAN FUNCTIONS ==========
 
 export async function listStudyPlans(userId: string): Promise<StudyPlan[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('study_plans')
     .select('*')
     .eq('user_id', userId)
@@ -434,13 +434,13 @@ export async function createStudyPlan(userId: string, subject: string, date: str
     date,
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('study_plans').insert(fromDbStudyPlan(entry))
+  const { error } = await getSupabase().from('study_plans').insert(fromDbStudyPlan(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function updateStudyPlan(userId: string, id: string, updates: Partial<Pick<StudyPlan, 'subject' | 'date'>>): Promise<StudyPlan> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('study_plans')
     .update(updates)
     .eq('id', id)
@@ -453,7 +453,7 @@ export async function updateStudyPlan(userId: string, id: string, updates: Parti
 }
 
 export async function deleteStudyPlan(userId: string, id: string): Promise<void> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('study_plans')
     .delete()
     .eq('id', id)
@@ -464,7 +464,7 @@ export async function deleteStudyPlan(userId: string, id: string): Promise<void>
 // ========== DEADLINE FUNCTIONS ==========
 
 export async function listDeadlines(userId: string): Promise<Deadline[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('deadlines')
     .select('*')
     .eq('user_id', userId)
@@ -482,13 +482,13 @@ export async function createDeadline(userId: string, text: string, date: string)
     done: false,
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('deadlines').insert(fromDbDeadline(entry))
+  const { error } = await getSupabase().from('deadlines').insert(fromDbDeadline(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function updateDeadline(userId: string, id: string, updates: Partial<Pick<Deadline, 'text' | 'date' | 'done'>>): Promise<Deadline> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('deadlines')
     .update(updates)
     .eq('id', id)
@@ -501,7 +501,7 @@ export async function updateDeadline(userId: string, id: string, updates: Partia
 }
 
 export async function deleteDeadline(userId: string, id: string): Promise<void> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('deadlines')
     .delete()
     .eq('id', id)
@@ -512,7 +512,7 @@ export async function deleteDeadline(userId: string, id: string): Promise<void> 
 // ========== CALENDAR ENTRY FUNCTIONS ==========
 
 export async function listCalendarEntries(userId: string): Promise<CalendarEntry[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('calendar_entries')
     .select('*')
     .eq('user_id', userId)
@@ -531,13 +531,13 @@ export async function createCalendarEntry(userId: string, date: string, text: st
     done: false,
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('calendar_entries').insert(fromDbCalendarEntry(entry))
+  const { error } = await getSupabase().from('calendar_entries').insert(fromDbCalendarEntry(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function updateCalendarEntry(userId: string, id: string, updates: Partial<Pick<CalendarEntry, 'text' | 'date' | 'done'>>): Promise<CalendarEntry> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('calendar_entries')
     .update(updates)
     .eq('id', id)
@@ -550,7 +550,7 @@ export async function updateCalendarEntry(userId: string, id: string, updates: P
 }
 
 export async function deleteCalendarEntry(userId: string, id: string): Promise<void> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('calendar_entries')
     .delete()
     .eq('id', id)
@@ -561,7 +561,7 @@ export async function deleteCalendarEntry(userId: string, id: string): Promise<v
 // ========== COMPLETED ITEM FUNCTIONS ==========
 
 export async function listCompletedItems(userId: string): Promise<CompletedItem[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('completed_items')
     .select('*')
     .eq('user_id', userId)
@@ -577,13 +577,13 @@ export async function createCompletedItem(userId: string, text: string): Promise
     text,
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('completed_items').insert(fromDbCompletedItem(entry))
+  const { error } = await getSupabase().from('completed_items').insert(fromDbCompletedItem(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function deleteCompletedItem(userId: string, id: string): Promise<void> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('completed_items')
     .delete()
     .eq('id', id)
@@ -592,7 +592,7 @@ export async function deleteCompletedItem(userId: string, id: string): Promise<v
 }
 
 export async function clearCompletedItems(userId: string): Promise<void> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('completed_items')
     .delete()
     .eq('user_id', userId)
@@ -607,7 +607,7 @@ export async function addFeedback(entry: Omit<FeedbackEntry, 'id' | 'createdAt'>
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('feedback').insert({
+  const { error } = await getSupabase().from('feedback').insert({
     id: item.id,
     user_id: item.userId,
     username: item.username,
@@ -621,7 +621,7 @@ export async function addFeedback(entry: Omit<FeedbackEntry, 'id' | 'createdAt'>
 }
 
 export async function listFeedback(): Promise<FeedbackEntry[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('feedback')
     .select('*')
     .order('created_at', { ascending: false })
@@ -630,7 +630,7 @@ export async function listFeedback(): Promise<FeedbackEntry[]> {
 }
 
 export async function listFeedbackByUser(userId: string): Promise<FeedbackEntry[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('feedback')
     .select('*')
     .eq('user_id', userId)
@@ -664,7 +664,7 @@ export async function trackAIUsage(userId: string, toolType: string): Promise<AI
     toolType,
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('ai_usage').insert({
+  const { error } = await getSupabase().from('ai_usage').insert({
     id: entry.id,
     user_id: entry.userId,
     tool_type: entry.toolType,
@@ -673,16 +673,16 @@ export async function trackAIUsage(userId: string, toolType: string): Promise<AI
   if (error) throw new Error(error.message)
 
   // Increment user's credit count
-  await supabase!
+  await getSupabase()
     .from('users')
-    .update({ ai_credits_used: supabase!.rpc('increment', { x: 1 }) })
+    .update({ ai_credits_used: getSupabase().rpc('increment', { x: 1 }) })
     .eq('id', userId)
 
   return entry
 }
 
 export async function getAIUsageCount(userId: string, since?: string): Promise<number> {
-  const query = supabase!
+  const query = getSupabase()
     .from('ai_usage')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)
@@ -697,7 +697,7 @@ export async function getAIUsageCount(userId: string, since?: string): Promise<n
 }
 
 export async function incrementAICredits(userId: string): Promise<void> {
-  const { data, error: fetchErr } = await supabase!
+  const { data, error: fetchErr } = await getSupabase()
     .from('users')
     .select('ai_credits_used')
     .eq('id', userId)
@@ -706,7 +706,7 @@ export async function incrementAICredits(userId: string): Promise<void> {
   if (fetchErr) throw new Error(fetchErr.message)
 
   const current = (data?.ai_credits_used || 0) + 1
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('users')
     .update({ ai_credits_used: current })
     .eq('id', userId)
@@ -945,7 +945,7 @@ export async function createUniversity(name: string, slug: string, description: 
     createdBy,
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('universities').insert(fromDbUniversity(entry))
+  const { error } = await getSupabase().from('universities').insert(fromDbUniversity(entry))
   if (error) throw new Error(error.message)
 
   // Auto-add creator as accepted teacher member
@@ -959,13 +959,13 @@ export async function createUniversity(name: string, slug: string, description: 
     status: 'accepted',
     inviteEmail: null,
   }
-  await supabase!.from('university_members').insert(fromDbUniversityMember(memberEntry))
+  await getSupabase().from('university_members').insert(fromDbUniversityMember(memberEntry))
 
   return entry
 }
 
 export async function findUniversityBySlug(slug: string): Promise<University | undefined> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('universities')
     .select('*')
     .eq('slug', slug)
@@ -975,7 +975,7 @@ export async function findUniversityBySlug(slug: string): Promise<University | u
 }
 
 export async function findUniversityById(id: string): Promise<University | undefined> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('universities')
     .select('*')
     .eq('id', id)
@@ -985,7 +985,7 @@ export async function findUniversityById(id: string): Promise<University | undef
 }
 
 export async function listUniversitiesByAdmin(userId: string): Promise<University[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('universities')
     .select('*')
     .eq('created_by', userId)
@@ -996,7 +996,7 @@ export async function listUniversitiesByAdmin(userId: string): Promise<Universit
 
 export async function listMyUniversities(userId: string): Promise<(University & { memberRole: string; memberStatus: string })[]> {
   // 1. Universities where user is an accepted member
-  const { data: memberData, error: memberError } = await supabase!
+  const { data: memberData, error: memberError } = await getSupabase()
     .from('university_members')
     .select('university_id, role, status, universities(*)')
     .eq('user_id', userId)
@@ -1011,7 +1011,7 @@ export async function listMyUniversities(userId: string): Promise<(University & 
   }))
 
   // 2. Also include universities where user is the creator (for backwards compat)
-  const { data: createdData, error: createdError } = await supabase!
+  const { data: createdData, error: createdError } = await getSupabase()
     .from('universities')
     .select('*')
     .eq('created_by', userId)
@@ -1033,7 +1033,7 @@ export async function listMyUniversities(userId: string): Promise<(University & 
 }
 
 export async function deleteUniversity(id: string): Promise<void> {
-  const { error } = await supabase!.from('universities').delete().eq('id', id)
+  const { error } = await getSupabase().from('universities').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
 
@@ -1050,13 +1050,13 @@ export async function inviteToUniversity(universityId: string, userId: string | 
     status: 'pending',
     inviteEmail,
   }
-  const { error } = await supabase!.from('university_members').insert(fromDbUniversityMember(entry))
+  const { error } = await getSupabase().from('university_members').insert(fromDbUniversityMember(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function acceptUniversityInvite(memberId: string): Promise<void> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('university_members')
     .update({ status: 'accepted' })
     .eq('id', memberId)
@@ -1064,7 +1064,7 @@ export async function acceptUniversityInvite(memberId: string): Promise<void> {
 }
 
 export async function listUniversityMembers(universityId: string): Promise<UniversityMember[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('university_members')
     .select('*')
     .eq('university_id', universityId)
@@ -1074,7 +1074,7 @@ export async function listUniversityMembers(universityId: string): Promise<Unive
 }
 
 export async function findUniversityMember(universityId: string, userId: string): Promise<UniversityMember | undefined> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('university_members')
     .select('*')
     .eq('university_id', universityId)
@@ -1085,7 +1085,7 @@ export async function findUniversityMember(universityId: string, userId: string)
 }
 
 export async function removeUniversityMember(memberId: string): Promise<void> {
-  const { error } = await supabase!.from('university_members').delete().eq('id', memberId)
+  const { error } = await getSupabase().from('university_members').delete().eq('id', memberId)
   if (error) throw new Error(error.message)
 }
 
@@ -1100,13 +1100,13 @@ export async function createCourse(universityId: string, name: string, descripti
     createdBy,
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('courses').insert(fromDbCourse(entry))
+  const { error } = await getSupabase().from('courses').insert(fromDbCourse(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function findCourseById(id: string): Promise<Course | undefined> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('courses')
     .select('*')
     .eq('id', id)
@@ -1116,7 +1116,7 @@ export async function findCourseById(id: string): Promise<Course | undefined> {
 }
 
 export async function listCoursesByUniversity(universityId: string): Promise<Course[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('courses')
     .select('*')
     .eq('university_id', universityId)
@@ -1126,7 +1126,7 @@ export async function listCoursesByUniversity(universityId: string): Promise<Cou
 }
 
 export async function listMyCourses(userId: string): Promise<(Course & { university_name: string })[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('course_enrollments')
     .select('courses(*, universities(name))')
     .eq('user_id', userId)
@@ -1138,7 +1138,7 @@ export async function listMyCourses(userId: string): Promise<(Course & { univers
 }
 
 export async function deleteCourse(id: string): Promise<void> {
-  const { error } = await supabase!.from('courses').delete().eq('id', id)
+  const { error } = await getSupabase().from('courses').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
 
@@ -1152,13 +1152,13 @@ export async function enrollStudent(courseId: string, userId: string, enrolledBy
     enrolledBy,
     enrolledAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('course_enrollments').insert(fromDbCourseEnrollment(entry))
+  const { error } = await getSupabase().from('course_enrollments').insert(fromDbCourseEnrollment(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function listCourseEnrollments(courseId: string): Promise<CourseEnrollment[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('course_enrollments')
     .select('*')
     .eq('course_id', courseId)
@@ -1168,7 +1168,7 @@ export async function listCourseEnrollments(courseId: string): Promise<CourseEnr
 }
 
 export async function findCourseEnrollment(courseId: string, userId: string): Promise<CourseEnrollment | undefined> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('course_enrollments')
     .select('*')
     .eq('course_id', courseId)
@@ -1179,7 +1179,7 @@ export async function findCourseEnrollment(courseId: string, userId: string): Pr
 }
 
 export async function unenrollStudent(enrollmentId: string): Promise<void> {
-  const { error } = await supabase!.from('course_enrollments').delete().eq('id', enrollmentId)
+  const { error } = await getSupabase().from('course_enrollments').delete().eq('id', enrollmentId)
   if (error) throw new Error(error.message)
 }
 
@@ -1196,13 +1196,13 @@ export async function createCourseFile(courseId: string, name: string, storagePa
     uploadedBy,
     uploadedAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('course_files').insert(fromDbCourseFile(entry))
+  const { error } = await getSupabase().from('course_files').insert(fromDbCourseFile(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function listCourseFiles(courseId: string): Promise<CourseFile[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('course_files')
     .select('*')
     .eq('course_id', courseId)
@@ -1212,7 +1212,7 @@ export async function listCourseFiles(courseId: string): Promise<CourseFile[]> {
 }
 
 export async function findCourseFileById(id: string): Promise<CourseFile | undefined> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('course_files')
     .select('*')
     .eq('id', id)
@@ -1222,7 +1222,7 @@ export async function findCourseFileById(id: string): Promise<CourseFile | undef
 }
 
 export async function deleteCourseFile(id: string): Promise<void> {
-  const { error } = await supabase!.from('course_files').delete().eq('id', id)
+  const { error } = await getSupabase().from('course_files').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
 
@@ -1239,13 +1239,13 @@ export async function createCourseMaterial(courseId: string, fileId: string | nu
     generatedBy,
     createdAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('course_materials').insert(fromDbCourseMaterial(entry))
+  const { error } = await getSupabase().from('course_materials').insert(fromDbCourseMaterial(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function listCourseMaterials(courseId: string): Promise<CourseMaterial[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('course_materials')
     .select('*')
     .eq('course_id', courseId)
@@ -1255,7 +1255,7 @@ export async function listCourseMaterials(courseId: string): Promise<CourseMater
 }
 
 export async function findCourseMaterialById(id: string): Promise<CourseMaterial | undefined> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('course_materials')
     .select('*')
     .eq('id', id)
@@ -1265,7 +1265,7 @@ export async function findCourseMaterialById(id: string): Promise<CourseMaterial
 }
 
 export async function deleteCourseMaterial(id: string): Promise<void> {
-  const { error } = await supabase!.from('course_materials').delete().eq('id', id)
+  const { error } = await getSupabase().from('course_materials').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
 
@@ -1273,7 +1273,7 @@ export async function deleteCourseMaterial(id: string): Promise<void> {
 // ========== ADMIN USER MANAGEMENT ==========
 
 export async function listAllUsers(): Promise<Pick<User, 'id' | 'username' | 'email' | 'role' | 'createdAt'>[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('users')
     .select('id, username, email, role, created_at')
     .order('created_at', { ascending: false })
@@ -1288,7 +1288,7 @@ export async function listAllUsers(): Promise<Pick<User, 'id' | 'username' | 'em
 }
 
 export async function updateUserRole(userId: string, role: UserRole): Promise<void> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('users')
     .update({ role })
     .eq('id', userId)
@@ -1296,7 +1296,7 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<vo
 }
 
 export async function listAllUniversities(): Promise<University[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('universities')
     .select('*')
     .order('created_at', { ascending: false })
@@ -1315,13 +1315,13 @@ export async function applyToUniversity(universityId: string, userId: string, ro
     status: 'pending',
     inviteEmail: null,
   }
-  const { error } = await supabase!.from('university_members').insert(fromDbUniversityMember(entry))
+  const { error } = await getSupabase().from('university_members').insert(fromDbUniversityMember(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function updateUniversityMemberStatus(memberId: string, status: 'pending' | 'accepted'): Promise<void> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('university_members')
     .update({ status })
     .eq('id', memberId)
@@ -1329,7 +1329,7 @@ export async function updateUniversityMemberStatus(memberId: string, status: 'pe
 }
 
 export async function listUniversityMembersWithUsers(universityId: string): Promise<(UniversityMember & { username?: string; email?: string })[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('university_members')
     .select('*, users:user_id (username, email)')
     .eq('university_id', universityId)
@@ -1343,7 +1343,7 @@ export async function listUniversityMembersWithUsers(universityId: string): Prom
 }
 
 export async function listCourseEnrollmentsWithUsers(courseId: string): Promise<(CourseEnrollment & { username?: string; email?: string })[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('course_enrollments')
     .select('*, users:user_id (username, email)')
     .eq('course_id', courseId)
@@ -1357,7 +1357,7 @@ export async function listCourseEnrollmentsWithUsers(courseId: string): Promise<
 }
 
 export async function listMyPendingUniversityRequests(userId: string): Promise<(UniversityMember & { university_name?: string })[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('university_members')
     .select('*, universities:university_id (name)')
     .eq('user_id', userId)
@@ -1419,13 +1419,13 @@ export async function createCourseRequest(courseId: string, userId: string): Pro
     status: 'pending',
     requestedAt: new Date().toISOString(),
   }
-  const { error } = await supabase!.from('course_requests').insert(fromDbCourseRequest(entry))
+  const { error } = await getSupabase().from('course_requests').insert(fromDbCourseRequest(entry))
   if (error) throw new Error(error.message)
   return entry
 }
 
 export async function listCourseRequests(courseId: string): Promise<(CourseRequest & { username?: string; email?: string })[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('course_requests')
     .select('*, users:user_id (username, email)')
     .eq('course_id', courseId)
@@ -1440,7 +1440,7 @@ export async function listCourseRequests(courseId: string): Promise<(CourseReque
 }
 
 export async function listMyCourseRequests(userId: string): Promise<(CourseRequest & { course_name?: string; university_name?: string })[]> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('course_requests')
     .select('*, courses:course_id (name, universities:university_id (name))')
     .eq('user_id', userId)
@@ -1455,7 +1455,7 @@ export async function listMyCourseRequests(userId: string): Promise<(CourseReque
 }
 
 export async function updateCourseRequestStatus(requestId: string, status: 'accepted' | 'rejected'): Promise<void> {
-  const { error } = await supabase!
+  const { error } = await getSupabase()
     .from('course_requests')
     .update({ status })
     .eq('id', requestId)
@@ -1463,7 +1463,7 @@ export async function updateCourseRequestStatus(requestId: string, status: 'acce
 }
 
 export async function findCourseRequest(courseId: string, userId: string): Promise<CourseRequest | undefined> {
-  const { data, error } = await supabase!
+  const { data, error } = await getSupabase()
     .from('course_requests')
     .select('*')
     .eq('course_id', courseId)

@@ -1,5 +1,5 @@
 import { mkdir, writeFile } from 'node:fs/promises'
-import { supabase } from '../../../utils/supabase'
+import { getSupabase } from '../../../utils/supabase'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAuth(event)
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
 
   // Try Supabase Storage
   try {
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await getSupabase().storage
       .from(bucketName)
       .upload(storagePath, filePart.data, {
         contentType: mimeType,
@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
       throw uploadError
     }
 
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = getSupabase().storage
       .from(bucketName)
       .getPublicUrl(storagePath)
 

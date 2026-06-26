@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
   const session = await requireAuth(event)
 
   // 1. Get my accepted universities
-  const { data: memberData, error: memberError } = await supabase!
+  const { data: memberData, error: memberError } = await getSupabase()
     .from('university_members')
     .select('university_id')
     .eq('user_id', session.userId)
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // 2. Get all courses from those universities
-  const { data: coursesData, error: coursesError } = await supabase!
+  const { data: coursesData, error: coursesError } = await getSupabase()
     .from('courses')
     .select('*, universities:university_id (name)')
     .in('university_id', uniIds)
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // 3. Get my enrollments
-  const { data: enrollData, error: enrollError } = await supabase!
+  const { data: enrollData, error: enrollError } = await getSupabase()
     .from('course_enrollments')
     .select('course_id')
     .eq('user_id', session.userId)
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
   // 4. Get my pending requests (gracefully handle missing table)
   let requestedCourseIds = new Set<string>()
   try {
-    const { data: reqData, error: reqError } = await supabase!
+    const { data: reqData, error: reqError } = await getSupabase()
       .from('course_requests')
       .select('course_id')
       .eq('user_id', session.userId)

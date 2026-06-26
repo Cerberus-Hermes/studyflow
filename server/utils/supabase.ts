@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 let _client: SupabaseClient | undefined
 
-function getSupabaseClient(): SupabaseClient {
+export function getSupabase(): SupabaseClient {
   if (_client) return _client
 
   const url = process.env.SUPABASE_URL
@@ -21,10 +21,3 @@ function getSupabaseClient(): SupabaseClient {
 
   return _client
 }
-
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(_, prop: string | symbol) {
-    const client = getSupabaseClient()
-    return (client as any)[prop]
-  },
-})
